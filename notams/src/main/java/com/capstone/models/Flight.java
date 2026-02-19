@@ -5,10 +5,10 @@ import java.time.LocalDateTime;
 public class Flight {
     private final Airport departureAirport;
     private final Airport arrivalAirport;
-    private LocalDateTime date;
+    private final LocalDateTime date;
     private FlightPath flightPath;
 
-    public Flight( Airport departureAirport, Airport arrivalAirport )
+    public Flight( Airport departureAirport, Airport arrivalAirport, LocalDateTime date )
     {
         if ( departureAirport == null || arrivalAirport == null ) {
             throw new IllegalArgumentException( "Invalid airport entered." );
@@ -16,7 +16,7 @@ public class Flight {
 
         this.departureAirport = departureAirport;
         this.arrivalAirport = arrivalAirport;
-        this.date = LocalDateTime.now();
+        this.date = date;
     }
 
     public Airport getDepartureAirport() 
@@ -39,13 +39,12 @@ public class Flight {
         return flightPath; 
     }
 
-    public boolean setFlightPath( FlightPath flightPath ) 
+    public void setFlightPath( FlightPath flightPath ) 
     {
         if ( flightPath == null ) {
-            return false;
+            throw new IllegalArgumentException( "Invalid flight path entered." );
         }
 
         this.flightPath = flightPath;
-        return true;
     }
 }
