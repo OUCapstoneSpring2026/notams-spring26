@@ -11,7 +11,7 @@ public class App
             final Airport arrival = new Airport( "KDFW" );
         }
         catch( final Exception e ) {
-            System.out.println( "Error: " + e.getMessage() );
+            System.out.println( e.getMessage() );
         }
     }
 }

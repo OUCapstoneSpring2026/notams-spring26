@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-You need two things installed before you can build and run this project: **Java 21** and **Apache Maven**.
+You need two things installed before you can build and run this project: **Java 21** and **Apache Maven 3.9.12**.
 
 ---
 
@@ -36,10 +36,10 @@ brew install --cask oracle-jdk@21
 ## 2. Install Maven
 
 ### Windows
-1. Go to [maven.apache.org/download.cgi](https://maven.apache.org/download.cgi) and download the **Binary zip archive** (e.g. `apache-maven-3.9.x-bin.zip`).
+1. Go to [maven.apache.org/download.cgi](https://maven.apache.org/download.cgi) and download the **Binary zip archive** (e.g. `apache-maven-3.9.12-bin.zip`).
 2. Extract it to a permanent location, such as:
    ```
-   C:\Program Files\Apache Maven\apache-maven-3.9.x
+   C:\Program Files\Apache Maven\apache-maven-3.9.12
    ```
 3. Add Maven to your PATH:
    - Press the **Windows key**, search for **"Edit the system environment variables"**, and open it.
@@ -47,21 +47,21 @@ brew install --cask oracle-jdk@21
    - Under **System variables**, select `Path` and click **Edit**.
    - Click **New** and add the path to Maven's `bin` folder, e.g.:
      ```
-     C:\Program Files\Apache Maven\apache-maven-3.9.x\bin
+     C:\Program Files\Apache Maven\apache-maven-3.9.12\bin
      ```
    - Click OK on all windows to save.
 4. Open a **new** Command Prompt and verify:
    ```
    mvn -version
    ```
-   You should see `Apache Maven 3.9.x`.
+   You should see `Apache Maven 3.9.12`.
 
 ### Mac
-1. Go to [maven.apache.org/download.cgi](https://maven.apache.org/download.cgi) and download the **Binary tar.gz archive** (e.g. `apache-maven-3.9.x-bin.tar.gz`).
+1. Go to [maven.apache.org/download.cgi](https://maven.apache.org/download.cgi) and download the **Binary tar.gz archive** (e.g. `apache-maven-3.9.12-bin.tar.gz`).
 2. Extract it and move it to a permanent location:
    ```bash
-   tar -xvf apache-maven-3.9.x-bin.tar.gz
-   sudo mv apache-maven-3.9.x /opt/apache-maven
+   tar -xvf apache-maven-3.9.12-bin.tar.gz
+   sudo mv apache-maven-3.9.12 /opt/apache-maven
    ```
 3. Add Maven to your PATH by adding this line to your `~/.zshrc` (or `~/.bash_profile` if using bash):
    ```bash
@@ -75,7 +75,7 @@ brew install --cask oracle-jdk@21
    ```bash
    mvn -version
    ```
-   You should see `Apache Maven 3.9.x`.
+   You should see `Apache Maven 3.9.12`.
 
 Alternatively on Mac, if you have [Homebrew](https://brew.sh) installed:
 ```bash
@@ -88,7 +88,7 @@ brew install maven
 
 ```bash
 git clone https://github.com/OUCapstoneSpring2026/notams-spring26.git
-cd notams
+cd notams-spring26
 ```
 
 ---

@@ -6,7 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.NoSuchElementException;
+import com.capstone.exceptions.AirportNotFoundException;
 
 public class Airport
 {
@@ -14,7 +14,7 @@ public class Airport
     private final Point2D coords;
     private static final String AIRPORT_COORDS_FILENAME = "airportCoords.csv";
 
-    public Airport( String icao ) throws IOException
+    public Airport( String icao ) throws IOException, AirportNotFoundException
     {
         this.icao = icao;
         this.coords = loadAirportCoordsFromCsv( icao );
@@ -30,7 +30,8 @@ public class Airport
         return coords;
     }
 
-    private Point2D loadAirportCoordsFromCsv( String icao ) throws IOException
+    private Point2D loadAirportCoordsFromCsv( String icao ) throws IOException,
+                                                            AirportNotFoundException
     {
         InputStream is = getClass().getClassLoader().getResourceAsStream(
                 AIRPORT_COORDS_FILENAME );
@@ -50,6 +51,6 @@ public class Airport
             }
         }
 
-        throw new NoSuchElementException( "ICAO coords not found: " + icao );
+        throw new AirportNotFoundException( "ICAO coords not found: " + icao );
     }
 }
