@@ -132,3 +132,10 @@ Full clean rebuild:
 ```bash
 mvn clean package
 ```
+
+## Resources
+* Airport coordinates: [airports.csv from OurAirports](https://ourairports.com/data/)
+  * Accessed 02/23/2026
+  * Trimmed to only include domestic US airports into the format: `icao,latitude,longitude`
+  * Stored as `notams/src/main/resources/airportCoords.csv`
+  * If filename changes, change `AIRPORT_COORDS_FILENAME` in `notams/src/main/java/com/capstone/models/Airport.java`
