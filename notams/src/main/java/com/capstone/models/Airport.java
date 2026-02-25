@@ -43,10 +43,11 @@ public class Airport
                 new InputStreamReader( is ) )) {
             String line;
             while( (line = br.readLine()) != null ) {
-
-                // TODO: parse coords from CSV
-                if( true ) {
-                    return new Point2D.Double( 0, 0 );
+                final String[] parts = line.split( "," );
+                if( parts.length == 3 && parts[0].equalsIgnoreCase( icao ) ) {
+                    final double lat = Double.parseDouble( parts[1].trim() );
+                    final double lon = Double.parseDouble( parts[2].trim() );
+                    return new Point2D.Double( lat, lon );
                 }
             }
         }

@@ -9,6 +9,9 @@ public class App
         try {
             final Airport departure = new Airport( "KOKC" );
             final Airport arrival = new Airport( "KDFW" );
+
+            System.out.println( "Departure coords: " + departure.getCoords() );
+            System.out.println( "Arrival coords: " + arrival.getCoords() );
         }
         catch( final Exception e ) {
             System.out.println( e.getMessage() );
