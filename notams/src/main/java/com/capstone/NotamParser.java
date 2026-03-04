@@ -1,82 +1,123 @@
 package com.capstone;
 
+import com.capstone.models.Notam;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.List;
-import java.util.Map;
 
 public class NotamParser
 {
     private final ObjectMapper mapper = new ObjectMapper();
 
     /**
-     * Parses the provided JSON string and returns a list where each element
-     * represents a NOTAM's data as key-value pairs.
+     * Parses the provided JSON string and returns a list of Notam objects.
      */
-    public List<Map<String, String>> parseNotams( String jsonResponse )
+    public List<Notam> parseNotams( String jsonResponse )
     {
-        List<Map<String, String>> notamList = new ArrayList<>();
+        List<Notam> notamList = new ArrayList<>();
 
         try {
             JsonNode root = mapper.readTree( jsonResponse );
             JsonNode items = root.path( "items" );
 
             for( JsonNode item : items ) {
-                JsonNode coreData = item.path( "properties" ).path(
-                        "coreNOTAMData" );
-                JsonNode notamNode = coreData.path( "notam" );
+                try {
+                    JsonNode coreData = item.path( "properties" ).path(
+                            "coreNOTAMData" );
+                    JsonNode notamNode = coreData.path( "notam" );
 
-                Map<String, String> data = new HashMap<>();
+                    String formattedText = null;
+                    String selectionCode = null;
+                    String traffic = null;
+                    String purpose = null;
+                    String scope = null;
 
-                // extracting the fields we might need 
-                data.put( "id", notamNode.path( "id" ).asText() );
-                data.put( "number", notamNode.path( "number" ).asText() );
-                data.put( "type", notamNode.path( "type" ).asText() );
-                data.put( "issued", notamNode.path( "issued" ).asText() );
-                data.put( "effectiveStart", notamNode.path( "effectiveStart" )
-                        .asText() );
-                data.put( "effectiveEnd", notamNode.path( "effectiveEnd" )
-                        .asText() );
-                data.put( "text", notamNode.path( "text" ).asText() );
-                data.put( "location", notamNode.path( "location" ).asText() );
-                data.put( "classification", notamNode.path( "classification" )
-                        .asText() );
-                data.put( "icaoLocation", notamNode.path( "icaoLocation" )
-                        .asText() );
-                data.put( "coordinates", notamNode.path( "coordinates" )
-                        .asText() );
-                data.put( "radius", notamNode.path( "radius" ).asText() );
-                data.put( "series", notamNode.path( "series" ).asText() );
-                data.put( "affectedFIR", notamNode.path( "affectedFIR" )
-                        .asText() );
-
-                JsonNode translations = coreData.path( "notamTranslation" );
-                for( JsonNode t : translations ) {
-                    if( "ICAO".equals( t.path( "type" ).asText() ) ) {
-                        String fullText = t.path( "formattedText" ).asText();
-                        data.put( "formattedText", fullText );
-
-                        // This section splits the Q-line Q) KZFW/QPIXX/I/NBO/A/...
-                        String[] lines = fullText.split( "\n" );
-                        if( lines.length > 1 ) {
-                            String[] qParts = lines[1].split( "/" );
-                            if( qParts.length >= 5 ) {
-                                data.put( "selectionCode", qParts[1] ); // This is the Q-code refer to CAP-16 for link to tables
-                                data.put( "traffic", qParts[2] ); // Traffic can also be useful refer to CAP-16
-                                data.put( "purpose", qParts[3] ); // Priority Code (e.g., NBO)
-                                data.put( "scope", qParts[4] ); // Scope A-Aerodrome, E-Enroute,W-Navigation warning,K-checklist
+                    JsonNode translations = coreData.path( "notamTranslation" );
+                    for( JsonNode t : translations ) {
+                        if( "ICAO".equals( t.path( "type" ).asText() ) ) {
+                            formattedText = t.path( "formattedText" ).asText();
+                            String[] lines = formattedText.split( "\n" );
+                            if( lines.length > 1 ) {
+                                String[] qParts = lines[1].split( "/" );
+                                if( qParts.length > 1 )
+                                    selectionCode = qParts[1];
+                                if( qParts.length > 2 )
+                                    traffic = qParts[2];
+                                if( qParts.length > 3 )
+                                    purpose = qParts[3];
+                                if( qParts.length > 4 )
+                                    scope = qParts[4];
                             }
                         }
                     }
+
+                    // parse timestamps into Instants
+                    Instant issued = parseInstant( notamNode.path( "issued" )
+                            .asText() );
+                    Instant effectiveStart = parseInstant( notamNode.path(
+                            "effectiveStart" ).asText() );
+                    Instant effectiveEnd = parseInstant( notamNode.path(
+                            "effectiveEnd" ).asText() );
+
+                    Notam parsedNotam = Notam.builder().id( notamNode.path(
+                            "id" ).asText() ).number( notamNode.path( "number" )
+                                    .asText() ).type( notamNode.path( "type" )
+                                            .asText() ).issued( issued )
+                            .effectiveStart( effectiveStart ).effectiveEnd(
+                                    effectiveEnd ).text( notamNode.path(
+                                            "text" ).asText() ).location(
+                                                    notamNode.path( "location" )
+                                                            .asText() )
+                            .classification( notamNode.path( "classification" )
+                                    .asText() ).icaoLocation( notamNode.path(
+                                            "icaoLocation" ).asText() )
+                            .coordinates( notamNode.path( "coordinates" )
+                                    .asText() ).radius( notamNode.path(
+                                            "radius" ).asText() ).series(
+                                                    notamNode.path( "series" )
+                                                            .asText() )
+                            .affectedFIR( notamNode.path( "affectedFIR" )
+                                    .asText() ).formattedText( formattedText )
+                            .selectionCode( selectionCode ).traffic( traffic )
+                            .purpose( purpose ).scope( scope ).build();
+
+                    notamList.add( parsedNotam );
+
                 }
-                notamList.add( data );
+                catch( IllegalArgumentException | NullPointerException e ) {
+                    // Logs the bad NOTAM and keeps the loop moving
+                    System.err.println( "Skipped malformed NOTAM: " + e
+                            .getMessage() );
+                }
             }
         }
-        catch( Exception e ) {
-            System.err.println( "Parsing error: " + e.getMessage() );
+        catch( JsonProcessingException e ) {
+            System.err.println( "Failed to parse NOTAM JSON: " + e
+                    .getMessage() );
         }
+
         return notamList;
+    }
+
+    /**
+     * Helper method to convert the effective start/end and issued strings into
+     * Instants
+     * Returns null if the string is empty or invalid
+     */
+    private Instant parseInstant( String dateStr )
+    {
+        if( dateStr == null || dateStr.isBlank() ) {
+            return null;
+        }
+        try {
+            return Instant.parse( dateStr );
+        }
+        catch( DateTimeParseException e ) {
+            return null;
+        }
     }
 }
