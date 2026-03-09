@@ -1,11 +1,21 @@
 package com.capstone.models;
 
-// TODO: implement flight path class
+import java.awt.geom.Point2D;
+import java.util.List;
+import com.capstone.services.FlightPathCalculator;
+
 public class FlightPath
 {
+    private final List<Point2D> waypoints;
 
-    public FlightPath( Airport departureAirport, Airport arrivalAirport )
+    public FlightPath( Airport departure, Airport arrival )
     {
-        // TODO
+        this.waypoints = FlightPathCalculator.interpolate( departure
+                .getCoords(), arrival.getCoords(), 50.0 );
+    }
+
+    public List<Point2D> getWaypoints()
+    {
+        return waypoints;
     }
 }
