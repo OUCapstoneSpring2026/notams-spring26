@@ -2,11 +2,9 @@
 
 ## Prerequisites
 
-You need two things installed before you can build and run this project: **Java 21** and **Apache Maven 3.9.12**.
+**Java 21** and **Apache Maven 3.9.12** must be installed before running the project.
 
----
-
-## 1. Install Java 21
+## 1. Install Java
 
 ### Windows
 1. Go to [oracle.com/java/technologies/downloads](https://www.oracle.com/java/technologies/downloads/) and download the **Java 21** installer (`.exe`) for Windows.
@@ -30,8 +28,6 @@ Alternatively on Mac, if you have [Homebrew](https://brew.sh) installed:
 ```bash
 brew install --cask oracle-jdk@21
 ```
-
----
 
 ## 2. Install Maven
 
@@ -82,16 +78,12 @@ Alternatively on Mac, if you have [Homebrew](https://brew.sh) installed:
 brew install maven
 ```
 
----
-
 ## 3. Clone the Repository
 
 ```bash
 git clone https://github.com/OUCapstoneSpring2026/notams-spring26.git
-cd notams-spring26
+cd notams-spring26/notams
 ```
-
----
 
 ## 4. Configure Environment Variables
 
@@ -116,10 +108,18 @@ CLIENT_SECRET=your_client_secret_here
 These values are used by the application to authenticate requests to the FAA
 NOTAM API.
 
----
-
 ## 5. Build the Project
 
+Use the Development instructions for quicker compilation. Use the Production instructions to package a full build of the program.
+
+### Development
+Compile the code:
+
+```bash
+mvn compile
+```
+
+### Production
 Compile the code and package it into a JAR:
 
 ```bash
@@ -128,23 +128,33 @@ mvn package -DskipTests
 
 The built JAR will be at `target/notams-1.0-SNAPSHOT.jar`.
 
----
-
 ## 6. Run the Project
 
+### Development
+```bash
+mvn exec:java -Dexec.mainClass="com.capstone.App"
+```
+
+### Production
 ```bash
 java -cp target/notams-1.0-SNAPSHOT.jar com.capstone.App
 ```
 
----
+### Command Line Arguments
+These flags can optionally be used when running the program with either method above. If any are used, then both must be provided with arguments. If no flags are used, the program will prompt the user for input.
+* `--departure <ICAO>`
+* `--arrival <ICAO>`
+
+Example usage:
+```bash
+mvn exec:java -Dexec.mainClass="com.capstone.App" --departure KLAX --arrival KJFK
+```
 
 ## 7. Run Tests
 
 ```bash
 mvn test
 ```
-
----
 
 ## Other Useful Commands
 
