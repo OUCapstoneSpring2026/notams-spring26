@@ -35,6 +35,7 @@ public class NotamParser
                     String traffic = null;
                     String purpose = null;
                     String scope = null;
+                    String affectedFIR = null;
 
                     final JsonNode translations = coreData.path(
                             "notamTranslation" );
@@ -45,7 +46,7 @@ public class NotamParser
 
                             String qLine = null;
 
-                            // Not all ICAO translations begin the same way, we need to find where the "Q)" is
+                            // Not all ICAO translations begin the same way, we need to find where the "Q)" begins.
                             for( final String line : lines ) {
                                 if( line.trim().startsWith( "Q)" ) ) {
                                     qLine = line.trim();
@@ -54,22 +55,33 @@ public class NotamParser
                             }
                             if( qLine != null ) {
                                 final String[] qParts = qLine.split( "/" );
-                                // the Q-line has 8 parts but we are only interested in the first 5.
-                                // Stuff could be missing like traffic, purpose, or scope, but the amount of / remain the same.
-                                // example: Q) KZFW/QLPAS////000/999/3524N09736W005
-                                // however if for some reason the Q-line has fewer than 5 parts
+                                // qParts[0] is the FIR/header portion, ex: "Q) KZFW"
+                                // qParts[1] = selectionCode
+                                // qParts[2] = traffic
+                                // qParts[3] = purpose
+                                // qParts[4] = scope
+                                // Later parts contain other Q-line data we are not using right now.
+                                // If for some reason the Q-line has fewer than 5, print a warning to stderr,
+                                // this will not stop parsing unless the Q-line is missing or we don't find a line that starts with "Q)"
                                 if( qParts.length < 5 ) {
                                     System.err.println(
                                             "Warning: Q-line has fewer than 5 parts: "
                                                     + qLine );
                                 }
-                                if( qParts.length > 1 && !qParts[1].isBlank() )
+                                // Extract affectedFIR from the first Q-line segment
+                                if( qParts.length > 0 ) {
+                                    final String firstPart = qParts[0].trim();
+                                    affectedFIR = firstPart.substring( 2 )
+                                            .trim();
+                                }
+                                // checks are still needed to prevent out of bounds access
+                                if( qParts.length > 1 )
                                     selectionCode = qParts[1];
-                                if( qParts.length > 2 && !qParts[2].isBlank() )
+                                if( qParts.length > 2 )
                                     traffic = qParts[2];
-                                if( qParts.length > 3 && !qParts[3].isBlank() )
+                                if( qParts.length > 3 )
                                     purpose = qParts[3];
-                                if( qParts.length > 4 && !qParts[4].isBlank() )
+                                if( qParts.length > 4 )
                                     scope = qParts[4];
                             }
                             else {
@@ -95,41 +107,83 @@ public class NotamParser
                     final String notamType = notamNode.path( "type" ).asText();
                     final String notamText = notamNode.path( "text" ).asText();
 
-                    // Check If any of the 7 required fields are missing/null.
+                    // Skip NOTAMs that are missing the 7 required fields, but log which fields are missing and add to a list.
                     if( notamId.isBlank() || notamNumber.isBlank() || notamType
                             .isBlank() || notamText.isBlank() || issued == null
                             || effectiveStart == null || effectiveEnd
                                     == null ) {
 
-                        final String displayId = notamId.isBlank() ?
-                                "MISSING_ID" :
-                                notamId;
+                        final List<String> missingFields = new ArrayList<>();
+                        addMissing( missingFields, notamId.isBlank(), "id" );
+                        addMissing( missingFields, notamNumber.isBlank(),
+                                "number" );
+                        addMissing( missingFields, notamType.isBlank(),
+                                "type" );
+                        addMissing( missingFields, notamText.isBlank(),
+                                "text" );
+                        addMissing( missingFields, issued == null, "issued" );
+                        addMissing( missingFields, effectiveStart == null,
+                                "effectiveStart" );
+                        addMissing( missingFields, effectiveEnd == null,
+                                "effectiveEnd" );
+
+                        String notamInfoError;
+                        String notamInfoLabel;
+                        // If we skip a NOTAM, we still want to be able to identify which one was skipped
+                        // Prefer NOTAM id first, then fall back to number, text, or formattedText.
+                        if( !notamId.isBlank() ) {
+                            notamInfoError = notamId;
+                            notamInfoLabel = "NOTAM ID: ";
+                        }
+                        else if( !notamNumber.isBlank() ) {
+                            notamInfoError = notamNumber;
+                            notamInfoLabel = "NOTAM Number: ";
+                        }
+                        else if( !notamText.isBlank() ) {
+                            notamInfoError = notamText;
+                            notamInfoLabel = "NOTAM Text: ";
+                        }
+                        else if( formattedText != null && !formattedText
+                                .isBlank() ) {
+                            notamInfoError = formattedText;
+                            notamInfoLabel = "NOTAM Formatted Text: ";
+                        }
+                        else {
+                            notamInfoError = "NOTAM does not have ID, number, text, or formattedText available";
+                            notamInfoLabel = "No identifying NOTAM information available: ";
+                        }
+                        // Print the missing fields followed by the NOTAM identifier 
                         System.err.println(
-                                "WARNING: Skipping NOTAM due to missing required field. ID: "
-                                        + displayId );
+                                "WARNING: Skipping NOTAM due to missing required fields: "
+                                        + missingFields + "\n"
+                                        + "NOTAM info: \n" + notamInfoLabel
+                                        + notamInfoError + "\n" );
                         continue; // log and skip to the next NOTAM
                     }
 
-                    final Notam parsedNotam = Notam.builder().id( notamId )
-                            .number( notamNumber ).type( notamType ).issued(
-                                    issued ).effectiveStart( effectiveStart )
-                            .effectiveEnd( effectiveEnd ).text( notamText )
+                    final Notam parsedNotam = Notam.builder()
+                            .id( notamId )
+                            .number( notamNumber )
+                            .type( notamType )
+                            .issued( issued )
+                            .effectiveStart( effectiveStart )
+                            .effectiveEnd( effectiveEnd )
+                            .text( notamText )
                             .location( notamNode.path( "location" ).asText() )
-                            .classification( notamNode.path( "classification" )
-                                    .asText() ).icaoLocation( notamNode.path(
-                                            "icaoLocation" ).asText() )
-                            .coordinates( notamNode.path( "coordinates" )
-                                    .asText() ).radius( notamNode.path(
-                                            "radius" ).asText() ).series(
-                                                    notamNode.path( "series" )
-                                                            .asText() )
-                            .affectedFIR( notamNode.path( "affectedFIR" )
-                                    .asText() ).formattedText( formattedText )
-                            .selectionCode( selectionCode ).traffic( traffic )
-                            .purpose( purpose ).scope( scope ).build();
+                            .classification( notamNode.path( "classification" ).asText() )
+                            .icaoLocation( notamNode.path( "icaoLocation" ).asText() )
+                            .coordinates( notamNode.path( "coordinates" ).asText() )
+                            .radius( notamNode.path( "radius" ).asText() )
+                            .series( notamNode.path( "series" ).asText() )
+                            .affectedFIR( affectedFIR )
+                            .formattedText( formattedText )
+                            .selectionCode( selectionCode )
+                            .traffic( traffic )
+                            .purpose( purpose )
+                            .scope( scope )
+                            .build();
 
                     notamList.add( parsedNotam );
-
                 }
                 catch( final IllegalArgumentException |
                        NullPointerException e ) {
@@ -161,13 +215,34 @@ public class NotamParser
         // time was missing because it was "PERM". So for now we can represent perm
         // as a date far in the future. 
         if( "PERM".equalsIgnoreCase( dateStr.trim() ) ) {
-            return Instant.parse( "2167-06-07T23:59:59Z" );
+            return Instant.MAX;
         }
         try {
             return Instant.parse( dateStr );
         }
         catch( final DateTimeParseException e ) {
+            System.err.println( "Could not parse timestamp: " + dateStr + " ("
+                    + e.getMessage() + ")" );
             return null;
+        }
+    }
+
+    /**
+     * Helper to collect the names of any required fields that are missing.
+     * 
+     * @param missingFields
+     *     list of missing required fields
+     * @param isMissing
+     *     whether the field is missing
+     * @param fieldName
+     *     name of the field to add
+     */
+    private void addMissing( List<String> missingFields,
+                             boolean isMissing,
+                             String fieldName )
+    {
+        if( isMissing ) {
+            missingFields.add( fieldName );
         }
     }
 }
