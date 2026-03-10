@@ -93,7 +93,32 @@ cd notams-spring26
 
 ---
 
-## 4. Build the Project
+## 4. Configure Environment Variables
+
+This project requires FAA NOTAM API credentials. These credentials must be
+stored in a `.env` file and **should not be committed to Git, verify that 
+`.env` is listed in .gitignore**.
+
+### Create the `.env` file
+
+Create a file named `.env` in the **`notams/` directory**, at the same level as 
+the `pom.xml` file.
+
+### Add the required variables
+
+Add the following entries to the `.env` file:
+
+```
+CLIENT_ID=your_client_id_here
+CLIENT_SECRET=your_client_secret_here
+```
+
+These values are used by the application to authenticate requests to the FAA
+NOTAM API.
+
+---
+
+## 5. Build the Project
 
 Compile the code and package it into a JAR:
 
@@ -105,7 +130,7 @@ The built JAR will be at `target/notams-1.0-SNAPSHOT.jar`.
 
 ---
 
-## 5. Run the Project
+## 6. Run the Project
 
 ```bash
 java -cp target/notams-1.0-SNAPSHOT.jar com.capstone.App
@@ -113,7 +138,7 @@ java -cp target/notams-1.0-SNAPSHOT.jar com.capstone.App
 
 ---
 
-## 6. Run Tests
+## 7. Run Tests
 
 ```bash
 mvn test
