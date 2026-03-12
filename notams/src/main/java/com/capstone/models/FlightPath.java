@@ -6,12 +6,37 @@ import com.capstone.services.FlightPathCalculator;
 
 public class FlightPath
 {
+    private final Airport departure;
+    private final Airport arrival;
     private final List<Point2D> waypoints;
 
-    public FlightPath( Airport departure, Airport arrival )
+    public FlightPath( final Airport departure, final Airport arrival )
     {
+        this.departure = departure;
+        this.arrival = arrival;
         this.waypoints = FlightPathCalculator.interpolate( departure
-                .getCoords(), arrival.getCoords(), 50.0 );
+                .getCoords(), arrival.getCoords() );
+    }
+
+    // Overload constructor to allow for specific interval
+    public FlightPath( final Airport departure,
+                       final Airport arrival,
+                       final double intervalNm )
+    {
+        this.departure = departure;
+        this.arrival = arrival;
+        this.waypoints = FlightPathCalculator.interpolate( departure
+                .getCoords(), arrival.getCoords(), intervalNm );
+    }
+
+    public Airport getDeparture()
+    {
+        return departure;
+    }
+
+    public Airport getArrival()
+    {
+        return arrival;
     }
 
     public List<Point2D> getWaypoints()
