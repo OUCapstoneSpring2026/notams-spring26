@@ -1,36 +1,66 @@
 package com.capstone;
 
-import java.util.List;
-import java.awt.geom.Point2D;
-
-import com.capstone.services.FlightPathCalculator;
-
 import com.capstone.models.Airport;
+import com.capstone.models.FlightPath;
+
+import java.util.Scanner;
 
 public class App
 {
-	public static void main( String[] args )
-	{
-		try {
-			final Airport departure = new Airport( "KOKC" );
-			final Airport arrival = new Airport( "KDFW" );
-			System.out.println( "Departure coords: " + departure.getCoords() );
-			System.out.println( "Arrival coords: " + arrival.getCoords() );
+    public static void main( String[] args )
+    {
+        String departureIcao = null;
+        String arrivalIcao = null;
 
-			NotamFetcher fetcher = new NotamFetcher();
-			String json = fetcher.fetchByIcao( "KOKC", 1000, 1 );
-			System.out.println( "Fetched successfully." );
-			System.out.println( json );
+        // Check if command line arguments were provided
+        if( args.length > 0 ) {
+            departureIcao = parseArg( args, "--departure" );
+            arrivalIcao = parseArg( args, "--arrival" );
 
-			List<Point2D> points = FlightPathCalculator.interpolate(
-					departure.getCoords(), arrival.getCoords(), 100 );
+            if( departureIcao == null || arrivalIcao == null ) {
+                System.err.println(
+                        "[ERROR] Usage: java -cp target/classes com.capstone.App --departure <ICAO> --arrival <ICAO>" );
+                System.exit( 1 );
+            }
+        }
+        // If command line arguments are not provided, prompt the user for input
+        else {
+            final Scanner scanner = new Scanner( System.in );
 
-			System.out.printf( "Generated %d points:%n", points.size() );
-			points.forEach( p -> System.out.printf( "(%.6f, %.6f)%n", p.getX(),
-					p.getY() ) );
-		}
-		catch( final Exception e ) {
-			System.out.println( e.getMessage() );
-		}
-	}
+            System.out.print( "Enter departure airport ICAO: " );
+            departureIcao = scanner.nextLine().trim().toUpperCase();
+
+            System.out.print( "Enter arrival airport ICAO: " );
+            arrivalIcao = scanner.nextLine().trim().toUpperCase();
+
+            scanner.close();
+        }
+
+        try {
+            final Airport departureAirport = new Airport( departureIcao );
+            final Airport arrivalAirport = new Airport( arrivalIcao );
+
+            final FlightPath flightPath = new FlightPath( departureAirport,
+                    arrivalAirport );
+
+            NotamFetcher fetcher = new NotamFetcher();
+            String json = fetcher.fetchByIcao( "KOKC", 1000, 1 );
+            System.out.println( "Fetched successfully." );
+            System.out.println( json );
+        }
+        catch( final Exception e ) {
+            System.err.println( "[ERROR] " + e.getMessage() );
+        }
+    }
+
+    private static String parseArg( String[] args, String flag )
+    {
+        // Loop through all args so they can be provided in any order
+        for( int i = 0; i < args.length - 1; i++ ) {
+            if( flag.equals( args[i] ) ) {
+                return args[i + 1].trim().toUpperCase();
+            }
+        }
+        return null;
+    }
 }
