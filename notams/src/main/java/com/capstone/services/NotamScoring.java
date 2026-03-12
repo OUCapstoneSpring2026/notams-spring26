@@ -13,8 +13,9 @@ public class NotamScoring
      */
     public static int calculateScore( Notam notam )
     {
-        if( notam == null || notam.getText() == null ) {
-            return 0;
+        if( notam == null ) {
+            throw new IllegalArgumentException(
+                    "null Notam object cannot be scored" );
         }
 
         // Get the char. count of notam text
