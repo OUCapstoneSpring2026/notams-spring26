@@ -1,10 +1,11 @@
 package com.capstone.services;
 
-import org.junit.Test;
 import java.awt.geom.Point2D;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class FlightPathCalculatorTest
 {
@@ -126,10 +127,10 @@ public class FlightPathCalculatorTest
                 List<Point2D> points = FlightPathCalculator.interpolate( JFK,
                                 LAX, 100 );
                 for( Point2D point : points ) {
-                        assertTrue( "Latitude out of range", point.getX() >= -90
-                                        && point.getX() <= 90 );
-                        assertTrue( "Longitude out of range", point.getY()
-                                        >= -180 && point.getY() <= 180 );
+                        assertTrue( point.getX() >= -90 && point.getX() <= 90,
+                                        "Latitude out of range" );
+                        assertTrue( point.getY() >= -180 && point.getY() <= 180,
+                                        "Longitude out of range" );
                 }
         }
 }
