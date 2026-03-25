@@ -132,7 +132,7 @@ The built JAR will be at `target/notams-1.0-SNAPSHOT.jar`.
 
 ### Development
 ```bash
-mvn exec:java -Dexec.mainClass="com.capstone.App"
+mvn exec:java "-Dexec.mainClass=com.capstone.App"
 ```
 
 ### Production
@@ -147,7 +147,7 @@ These flags can optionally be used when running the program with either method a
 
 Example usage:
 ```bash
-mvn exec:java -Dexec.mainClass="com.capstone.App" --departure KLAX --arrival KJFK
+mvn exec:java "-Dexec.mainClass=com.capstone.App" "-Dexec.args= --departure KLAX --arrival KJFK"
 ```
 
 ## 7. Run Tests
