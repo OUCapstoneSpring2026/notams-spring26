@@ -34,6 +34,14 @@ public class NotamFetcher
 				.build();
 	}
 
+	// Package-private constructor for testing purposes
+	NotamFetcher(String clientId, String clientSecret, HttpClient httpClient)
+	{
+		this.clientId = clientId;
+		this.clientSecret = clientSecret;
+		this.httpClient = httpClient;
+	}
+
 	// Overload: defaults to page 1 and DEFAULT_PAGE_SIZE results.
 	public String fetchByIcao( String icaoCode )
 			throws IOException, InterruptedException
