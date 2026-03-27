@@ -1,10 +1,11 @@
 package com.capstone.models;
 
 import com.capstone.exceptions.AirportNotFoundException;
-import org.junit.Test;
 import java.awt.geom.Point2D;
 
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class AirportTest
 {
@@ -69,29 +70,29 @@ public class AirportTest
 
     // AirportNotFoundException
 
-    @Test(expected = AirportNotFoundException.class)
+    @Test
     public void constructor_unknownIcao_throwsAirportNotFoundException() throws Exception
     {
-        new Airport( "ZZZZ" );
+        assertThrows( AirportNotFoundException.class, () -> new Airport( "ZZZZ" ) );
     }
 
-    @Test(expected = AirportNotFoundException.class)
+    @Test
     public void constructor_emptyString_throwsAirportNotFoundException() throws Exception
     {
-        new Airport( "" );
+        assertThrows( AirportNotFoundException.class, () -> new Airport( "" ) );
     }
 
-    @Test(expected = Exception.class)
+    @Test
     public void constructor_nullIcao_throwsException() throws Exception
     {
-        new Airport( null );
+        assertThrows( Exception.class, () -> new Airport( null ) );
     }
 
     // Incorrectly formatted CSV row
 
-    @Test(expected = NumberFormatException.class)
+    @Test
     public void constructor_icaoWithMalformedCoords_throwsNumberFormatException() throws Exception
     {
-        new Airport( "KBAD" );
+        assertThrows( NumberFormatException.class, () -> new Airport( "KBAD" ) );
     }
 }
