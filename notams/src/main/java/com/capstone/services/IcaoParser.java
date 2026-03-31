@@ -27,26 +27,26 @@ public class IcaoParser
         }
     }
 
-    private static Map<String, Point2D> parseIcaoCoords( InputStream is ) throws IOException
+    private static Map<String, Point2D> parseIcaoCoords( final InputStream is ) throws IOException
     {
         final Map<String, Point2D> icaoCoordsMap = new HashMap<>();
-        try (BufferedReader reader = new BufferedReader( new InputStreamReader(
-                is, StandardCharsets.UTF_8 ) )) {
+        try (final BufferedReader reader = new BufferedReader(
+                new InputStreamReader( is, StandardCharsets.UTF_8 ) )) {
             String line;
             while( (line = reader.readLine()) != null ) {
-                String[] parts = line.trim().split( "," );
+                final String[] parts = line.trim().split( "," );
                 if( parts.length != 3 )
                     continue;
-                String icao = parts[0].trim().toUpperCase();
-                double lat = Double.parseDouble( parts[1].trim() );
-                double lon = Double.parseDouble( parts[2].trim() );
+                final String icao = parts[0].trim().toUpperCase();
+                final double lat = Double.parseDouble( parts[1].trim() );
+                final double lon = Double.parseDouble( parts[2].trim() );
                 icaoCoordsMap.put( icao, new Point2D.Double( lat, lon ) );
             }
         }
         return icaoCoordsMap;
     }
 
-    public static boolean icaoExists( String icao )
+    public static boolean icaoExists( final String icao )
     {
         return ICAO_COORDS_MAP.containsKey( icao );
     }
@@ -80,9 +80,9 @@ public class IcaoParser
         };
     }
 
-    public static Point2D getCoordsForIcao( String icao ) throws AirportNotFoundException
+    public static Point2D getCoordsForIcao( final String icao ) throws AirportNotFoundException
     {
-        Point2D coords = ICAO_COORDS_MAP.get( icao );
+        final Point2D coords = ICAO_COORDS_MAP.get( icao );
         if( coords == null ) {
             throw new AirportNotFoundException( "ICAO coords not found: "
                     + icao );

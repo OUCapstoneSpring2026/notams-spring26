@@ -10,7 +10,8 @@ public class Airport
     private final String icao;
     private final Point2D coords;
 
-    public Airport( String icao ) throws IOException, AirportNotFoundException
+    public Airport( final String icao ) throws IOException,
+                                        AirportNotFoundException
     {
         this.icao = icao;
         this.coords = IcaoParser.getCoordsForIcao( icao );
