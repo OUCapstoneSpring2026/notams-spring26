@@ -2,6 +2,8 @@ package com.capstone;
 
 import com.capstone.models.Airport;
 import com.capstone.models.FlightPath;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.Scanner;
 
@@ -45,8 +47,16 @@ public class App
 
             NotamFetcher fetcher = new NotamFetcher();
             String json = fetcher.fetchByIcao( "KOKC", 1000, 1 );
-            System.out.println( "Fetched successfully." );
+
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode rootNode = mapper.readTree( json );
+
+            int notamCount = rootNode.get( "totalCount" ).asInt();
+
+            System.out.println( "Fetched " + notamCount
+                    + " NOTAMs successfully." );
             System.out.println( json );
+
         }
         catch( final Exception e ) {
             System.err.println( "[ERROR] " + e.getMessage() );
