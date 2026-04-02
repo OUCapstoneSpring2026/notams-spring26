@@ -2,13 +2,19 @@ package com.capstone;
 
 import com.capstone.models.Airport;
 import com.capstone.models.FlightPath;
+<<<<<<< HEAD
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+=======
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+>>>>>>> bdeb608 ([CAP-39] replaced all instances of printing to stderr with log4j logging)
 
 import java.util.Scanner;
 
 public class App
 {
+	private static final Logger logger = LogManager.getLogger();
     public static void main( String[] args )
     {
         String departureIcao = null;
@@ -20,8 +26,7 @@ public class App
             arrivalIcao = parseArg( args, "--arrival" );
 
             if( departureIcao == null || arrivalIcao == null ) {
-                System.err.println(
-                        "[ERROR] Usage: java -cp target/classes com.capstone.App --departure <ICAO> --arrival <ICAO>" );
+                logger.error("Usage: java -cp target/classes com.capstone.App --departure <ICAO> --arrival <ICAO>");
                 System.exit( 1 );
             }
         }
@@ -43,8 +48,7 @@ public class App
             final Airport arrivalAirport = new Airport( arrivalIcao );
 
             final FlightPath flightPath = new FlightPath( departureAirport,
-                    arrivalAirport );
-
+                    arrivalAirport );		
             NotamFetcher fetcher = new NotamFetcher();
             String json = fetcher.fetchByIcao( "KOKC", 1000, 1 );
 
@@ -59,7 +63,7 @@ public class App
 
         }
         catch( final Exception e ) {
-            System.err.println( "[ERROR] " + e.getMessage() );
+            logger.error("Application error", e);
         }
     }
 

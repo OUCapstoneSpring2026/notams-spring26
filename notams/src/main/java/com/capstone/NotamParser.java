@@ -8,10 +8,13 @@ import java.util.ArrayList;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.List;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 public class NotamParser
 {
     private final ObjectMapper mapper = new ObjectMapper();
+    private static final Logger logger = LogManager.getLogger();
 
     /**
      * Parses the provided JSON string and returns a list of Notam objects.
@@ -64,9 +67,7 @@ public class NotamParser
                                 // If for some reason the Q-line has fewer than 5, print a warning to stderr,
                                 // this will not stop parsing unless the Q-line is missing or we don't find a line that starts with "Q)"
                                 if( qParts.length < 5 ) {
-                                    System.err.println(
-                                            "Warning: Q-line has fewer than 5 parts: "
-                                                    + qLine );
+                                    logger.trace("Q-line has fewer than 5 parts: {}", qLine);
                                 }
                                 // Extract affectedFIR from the first Q-line segment
                                 if( qParts.length > 0 ) {
@@ -86,8 +87,7 @@ public class NotamParser
                             }
                             else {
                                 // if Q-line is missing, the selectionCode, traffic, etc., remain null as initialized above.
-                                System.err.println(
-                                        "Warning: ICAO translation found, but missing the Q-line" );
+                                logger.info("ICAO translation found, but missing the Q-line");
                             }
                         }
                     }
@@ -153,11 +153,9 @@ public class NotamParser
                             notamInfoLabel = "No identifying NOTAM information available: ";
                         }
                         // Print the missing fields followed by the NOTAM identifier 
-                        System.err.println(
-                                "WARNING: Skipping NOTAM due to missing required fields: "
-                                        + missingFields + "\n"
-                                        + "NOTAM info: \n" + notamInfoLabel
-                                        + notamInfoError + "\n" );
+                        logger.warn(
+                                "Skipping NOTAM due to missing required fields: {}\nNOTAM info:\n{}{}\n",
+                                missingFields, notamInfoLabel, notamInfoError );
                         continue; // log and skip to the next NOTAM
                     }
 
@@ -188,8 +186,7 @@ public class NotamParser
                 catch( final IllegalArgumentException |
                        NullPointerException e ) {
                     // Catch any bad NOTAM that got past our checks. Skip the broken/missing-info NOTAM, log it and move on
-                    System.err.println( "Skipped malformed NOTAM: " + e
-                            .getMessage() );
+                    logger.error( "Skipped malformed NOTAM: ", e );
                 }
             }
         }
@@ -221,8 +218,7 @@ public class NotamParser
             return Instant.parse( dateStr );
         }
         catch( final DateTimeParseException e ) {
-            System.err.println( "Could not parse timestamp: " + dateStr + " ("
-                    + e.getMessage() + ")" );
+            logger.warn( "Could not parse timestamp: {}", dateStr, e );
             return null;
         }
     }
