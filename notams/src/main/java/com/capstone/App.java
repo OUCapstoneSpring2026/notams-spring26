@@ -3,7 +3,7 @@ package com.capstone;
 import com.capstone.exceptions.AirportNotFoundException;
 import com.capstone.models.Airport;
 import com.capstone.models.FlightPath;
-import com.capstone.services.IcaoParser;
+import com.capstone.services.AirportValidator;
 
 import java.util.Scanner;
 
@@ -14,10 +14,21 @@ public class App
     {
         String departureIcao = null;
         String arrivalIcao = null;
+        AirportValidator airportValidator = null;
 
         if( args.length > 0 ) {
             final String rawDeparture = parseArg( args, "--departure" );
             final String rawArrival = parseArg( args, "--arrival" );
+
+            try {
+                airportValidator = new AirportValidator();
+            }
+            catch( final Exception e ) {
+                System.err.println(
+                        "[ERROR] Failed to initialize AirportValidator: " + e
+                                .getMessage() );
+                System.exit( 1 );
+            }
 
             if( rawDeparture == null || rawArrival == null ) {
                 System.err.println(
@@ -26,8 +37,8 @@ public class App
             }
 
             try {
-                departureIcao = IcaoParser.parseIcaoInput( rawDeparture );
-                arrivalIcao = IcaoParser.parseIcaoInput( rawArrival );
+                departureIcao = airportValidator.parseIcaoInput( rawDeparture );
+                arrivalIcao = airportValidator.parseIcaoInput( rawArrival );
             }
             catch( final AirportNotFoundException e ) {
                 System.err.println( "[ERROR] " + e.getMessage() );
@@ -35,7 +46,7 @@ public class App
             }
         }
         else {
-            final String[] icaos = promptAndConfirmIcaos();
+            final String[] icaos = promptAndConfirmIcaos( airportValidator );
             departureIcao = icaos[0];
             arrivalIcao = icaos[1];
         }
@@ -56,11 +67,12 @@ public class App
         }
     }
 
-    private static String[] promptAndConfirmIcaos()
+    private static String[] promptAndConfirmIcaos( final AirportValidator airportValidator )
     {
         try (final Scanner scanner = new Scanner( System.in )) {
             while( true ) {
-                final String[] resolved = resolveIcaoPair( scanner );
+                final String[] resolved = resolveIcaoPair( scanner,
+                        airportValidator );
                 if( confirmIcaos( scanner, resolved[0], resolved[1] ) ) {
                     return resolved;
                 }
@@ -68,14 +80,16 @@ public class App
         }
     }
 
-    private static String[] resolveIcaoPair( final Scanner scanner )
+    private static String[] resolveIcaoPair( final Scanner scanner,
+                                             final AirportValidator airportValidator )
     {
         while( true ) {
             final String rawDeparture = promptForIcao( scanner, "departure" );
             final String rawArrival = promptForIcao( scanner, "arrival" );
             try {
-                return new String[] { IcaoParser.parseIcaoInput( rawDeparture ),
-                        IcaoParser.parseIcaoInput( rawArrival ) };
+                return new String[] { airportValidator.parseIcaoInput(
+                        rawDeparture ), airportValidator.parseIcaoInput(
+                                rawArrival ) };
             }
             catch( final AirportNotFoundException e ) {
                 System.out.println( "[ERROR] " + e.getMessage()

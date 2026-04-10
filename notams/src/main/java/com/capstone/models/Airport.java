@@ -3,7 +3,7 @@ package com.capstone.models;
 import java.awt.geom.Point2D;
 import java.io.IOException;
 import com.capstone.exceptions.AirportNotFoundException;
-import com.capstone.services.IcaoParser;
+import com.capstone.services.AirportValidator;
 
 public class Airport
 {
@@ -14,7 +14,7 @@ public class Airport
                                         AirportNotFoundException
     {
         this.icao = icao;
-        this.coords = IcaoParser.getCoordsForIcao( icao );
+        this.coords = AirportValidator.getCoordsForIcao( icao );
     }
 
     public String getIcao()
