@@ -61,6 +61,14 @@ public class AirportValidatorTest
     }
 
     @Test
+    public void parseIcaoInput_threeCharCode_whenOnlyArptIdExists_returnsArptId() throws Exception
+    {
+        AirportValidator validator = new AirportValidator( TEST_CSV );
+        String result = validator.validateIcaoInput( "BOS" );
+        assertEquals( "BOS", result );
+    }
+
+    @Test
     public void parseIcaoInput_invalidLength_throwsAirportNotFoundException() throws Exception
     {
         AirportValidator validator = new AirportValidator( TEST_CSV );
@@ -77,9 +85,11 @@ public class AirportValidatorTest
     }
 
     @Test
-    public void constructor_malformedCoordsInCsv_throwsNumberFormatException()
+    public void constructor_malformedCoordsInCsv_skipsMalformedRows()
     {
-        assertThrows( NumberFormatException.class, () -> new AirportValidator(
+        AirportValidator validator = assertDoesNotThrow( () -> new AirportValidator(
                 TEST_CSV_MALFORMED ) );
+        assertThrows( AirportNotFoundException.class, () -> validator
+                .validateIcaoInput( "BAD" ) );
     }
 }

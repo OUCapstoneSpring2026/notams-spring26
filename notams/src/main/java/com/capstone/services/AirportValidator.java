@@ -6,14 +6,20 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.capstone.exceptions.AirportNotFoundException;
 
 public class AirportValidator
 {
-    private static final String AIRPORT_COORDS_FILENAME = "airportCoords.csv";
+    private static final String AIRPORT_COORDS_FILENAME = "APT_BASE.csv";
+    private static final String HEADER_ICAO = "ICAO_ID";
+    private static final String HEADER_ARPT_ID = "ARPT_ID";
+    private static final String HEADER_LAT = "LAT_DECIMAL";
+    private static final String HEADER_LON = "LONG_DECIMAL";
     private final Map<String, Point2D> icaoCoordsMap;
 
     public AirportValidator()
@@ -31,7 +37,7 @@ public class AirportValidator
                         + filename );
             }
 
-            this.icaoCoordsMap = parseIcaoCoords( is );
+            this.icaoCoordsMap = parseAirportCodeCoords( is );
         }
         catch( final IOException e ) {
             throw new RuntimeException(
@@ -40,23 +46,92 @@ public class AirportValidator
         }
     }
 
-    private static Map<String, Point2D> parseIcaoCoords( final InputStream is ) throws IOException
+    private static Map<String, Point2D> parseAirportCodeCoords( final InputStream is ) throws IOException
     {
         final Map<String, Point2D> map = new HashMap<>();
         try (final BufferedReader reader = new BufferedReader(
                 new InputStreamReader( is, StandardCharsets.UTF_8 ) )) {
+
+            final String headerLine = reader.readLine();
+            if( headerLine == null )
+                return map;
+
+            final String[] headers = parseCsvLine( headerLine );
+            final int icaoIdx = findHeaderIndex( headers, HEADER_ICAO );
+            final int arptIdIdx = findHeaderIndex( headers, HEADER_ARPT_ID );
+            final int latIdx = findHeaderIndex( headers, HEADER_LAT );
+            final int lonIdx = findHeaderIndex( headers, HEADER_LON );
+
+            final int minLength = Math.max( icaoIdx, Math.max( arptIdIdx, Math
+                    .max( latIdx, lonIdx ) ) ) + 1;
+
             String line;
             while( (line = reader.readLine()) != null ) {
-                final String[] parts = line.trim().split( "," );
-                if( parts.length != 3 )
+                final String[] parts = parseCsvLine( line );
+                if( parts.length < minLength )
                     continue;
-                final String icao = parts[0].trim().toUpperCase();
-                final double lat = Double.parseDouble( parts[1].trim() );
-                final double lon = Double.parseDouble( parts[2].trim() );
-                map.put( icao, new Point2D.Double( lat, lon ) );
+
+                String airportCode = null;
+                final String icao = parts[icaoIdx].trim();
+                final String arptId = parts[arptIdIdx].trim();
+                if( icao.isEmpty() && arptId.isEmpty() )
+                    continue;
+
+                if( icao.isEmpty() ) {
+                    airportCode = arptId;
+                }
+                else {
+                    airportCode = icao;
+                }
+
+                try {
+                    final double lat = Double.parseDouble( parts[latIdx]
+                            .trim() );
+                    final double lon = Double.parseDouble( parts[lonIdx]
+                            .trim() );
+                    map.put( airportCode.toUpperCase(), new Point2D.Double( lat,
+                            lon ) );
+                }
+                catch( NumberFormatException e ) {
+                    // skip rows with unparseable coordinates
+                }
             }
         }
         return map;
+    }
+
+    private static int findHeaderIndex( final String[] headers,
+                                        final String target )
+    {
+        for( int i = 0; i < headers.length; i++ ) {
+            if( headers[i].trim().equalsIgnoreCase( target ) )
+                return i;
+        }
+        throw new IllegalArgumentException( "Required CSV column not found: "
+                + target );
+    }
+
+    private static String[] parseCsvLine( final String line )
+    {
+        final List<String> fields = new ArrayList<>();
+        boolean inQuotes = false;
+        final StringBuilder sb = new StringBuilder();
+
+        for( int i = 0; i < line.length(); i++ ) {
+            final char c = line.charAt( i );
+            if( c == '"' ) {
+                inQuotes = !inQuotes;
+            }
+            else if( c == ',' && !inQuotes ) {
+                fields.add( sb.toString().trim() );
+                sb.setLength( 0 );
+            }
+            else {
+                sb.append( c );
+            }
+        }
+        fields.add( sb.toString().trim() ); // last field
+        return fields.toArray( new String[0] );
     }
 
     /**
@@ -97,7 +172,13 @@ public class AirportValidator
         final String normalizedCode = rawAirportCode.trim().toUpperCase();
 
         return switch( normalizedCode.length() ) {
-        case 4 -> normalizedCode;
+        case 4 -> {
+            if( icaoCoordsMap.containsKey( normalizedCode ) ) {
+                yield normalizedCode;
+            }
+            throw new AirportNotFoundException( "ICAO not found: "
+                    + normalizedCode );
+        }
         case 3 -> {
             final boolean exactMatchFound = icaoCoordsMap.containsKey(
                     normalizedCode );
@@ -119,7 +200,14 @@ public class AirportValidator
                         + normalizedCode );
             }
         }
-        case 2 -> "K" + normalizedCode;
+        case 2 -> {
+            final String prefixedCode = "K" + normalizedCode;
+            if( icaoCoordsMap.containsKey( prefixedCode ) ) {
+                yield prefixedCode;
+            }
+            throw new AirportNotFoundException( "ICAO not found: "
+                    + prefixedCode );
+        }
         default -> throw new AirportNotFoundException( "Invalid ICAO length: "
                 + normalizedCode );
         };
