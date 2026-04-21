@@ -1,11 +1,15 @@
 package com.capstone.models;
 
 import com.capstone.exceptions.AirportNotFoundException;
+import com.capstone.services.AirportValidator;
 import java.awt.geom.Point2D;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class AirportTest
 {
@@ -15,57 +19,49 @@ public class AirportTest
     @Test
     public void getIcao_returnsExactIcaoPassedIn() throws Exception
     {
-        Airport airport = new Airport( "KJFK" );
+        AirportValidator validator = Mockito.mock( AirportValidator.class );
+        when( validator.getCoordsForIcao( "KJFK" ) ).thenReturn(
+                new Point2D.Double( 40.6413, -73.7781 ) );
+
+        Airport airport = new Airport( "KJFK", validator );
         assertEquals( "KJFK", airport.getIcao() );
     }
 
     // getCoords()
 
     @Test
-    public void getCoords_knownAirport_returnsCorrectLatitude() throws Exception
+    public void constructor_fetchesCoordsFromValidator() throws Exception
     {
-        Airport airport = new Airport( "KJFK" );
-        assertEquals( 40.6413, airport.getCoords().getX(), 0.0001 );
-    }
+        AirportValidator validator = Mockito.mock( AirportValidator.class );
+        when( validator.getCoordsForIcao( "KJFK" ) ).thenReturn(
+                new Point2D.Double( 40.6413, -73.7781 ) );
 
-    @Test
-    public void getCoords_knownAirport_returnsCorrectLongitude() throws Exception
-    {
-        Airport airport = new Airport( "KJFK" );
+        Airport airport = new Airport( "KJFK", validator );
+        assertEquals( 40.6413, airport.getCoords().getX(), 0.0001 );
         assertEquals( -73.7781, airport.getCoords().getY(), 0.0001 );
     }
 
     @Test
     public void getCoords_returnsPoint2DInstance() throws Exception
     {
-        Airport airport = new Airport( "KLAX" );
+        AirportValidator validator = Mockito.mock( AirportValidator.class );
+        when( validator.getCoordsForIcao( "KLAX" ) ).thenReturn(
+                new Point2D.Double( 33.9425, -118.4081 ) );
+
+        Airport airport = new Airport( "KLAX", validator );
         assertTrue( airport.getCoords() instanceof Point2D );
     }
 
-    // Case insensitivity
-
     @Test
-    public void constructor_lowercaseIcao_stillFindsAirport() throws Exception
+    public void constructor_passesIcaoToValidator() throws Exception
     {
-        Airport airport = new Airport( "kjfk" );
-        assertEquals( 40.6413, airport.getCoords().getX(), 0.0001 );
-    }
+        AirportValidator validator = Mockito.mock( AirportValidator.class );
+        Point2D coords = new Point2D.Double( 40.6413, -73.7781 );
+        when( validator.getCoordsForIcao( "KJFK" ) ).thenReturn( coords );
 
-    @Test
-    public void constructor_mixedCaseIcao_stillFindsAirport() throws Exception
-    {
-        Airport airport = new Airport( "kJfK" );
+        Airport airport = new Airport( "KJFK", validator );
         assertNotNull( airport.getCoords() );
-    }
-
-    // Multiple airports
-
-    @Test
-    public void constructor_differentAirports_returnDifferentCoords() throws Exception
-    {
-        Airport jfk = new Airport( "KJFK" );
-        Airport lax = new Airport( "KLAX" );
-        assertNotEquals( jfk.getCoords(), lax.getCoords() );
+        verify( validator ).getCoordsForIcao( "KJFK" );
     }
 
     // AirportNotFoundException
@@ -73,26 +69,11 @@ public class AirportTest
     @Test
     public void constructor_unknownIcao_throwsAirportNotFoundException() throws Exception
     {
-        assertThrows( AirportNotFoundException.class, () -> new Airport( "ZZZZ" ) );
-    }
+        AirportValidator validator = Mockito.mock( AirportValidator.class );
+        when( validator.getCoordsForIcao( "ZZZZ" ) ).thenThrow(
+                new AirportNotFoundException( "ICAO coords not found: ZZZZ" ) );
 
-    @Test
-    public void constructor_emptyString_throwsAirportNotFoundException() throws Exception
-    {
-        assertThrows( AirportNotFoundException.class, () -> new Airport( "" ) );
-    }
-
-    @Test
-    public void constructor_nullIcao_throwsException() throws Exception
-    {
-        assertThrows( Exception.class, () -> new Airport( null ) );
-    }
-
-    // Incorrectly formatted CSV row
-
-    @Test
-    public void constructor_icaoWithMalformedCoords_throwsNumberFormatException() throws Exception
-    {
-        assertThrows( NumberFormatException.class, () -> new Airport( "KBAD" ) );
+        assertThrows( AirportNotFoundException.class, () -> new Airport(
+                "ZZZZ", validator ) );
     }
 }

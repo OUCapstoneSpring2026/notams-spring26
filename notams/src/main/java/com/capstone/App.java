@@ -1,57 +1,73 @@
 package com.capstone;
 
+import com.capstone.exceptions.AirportNotFoundException;
 import com.capstone.models.Airport;
 import com.capstone.models.FlightPath;
-<<<<<<< HEAD
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-=======
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
->>>>>>> bdeb608 ([CAP-39] replaced all instances of printing to stderr with log4j logging)
+import com.capstone.services.AirportValidator;
 
 import java.util.Scanner;
 
 public class App
 {
-	private static final Logger logger = LogManager.getLogger();
+    private static final Logger logger = LogManager.getLogger();
+
     public static void main( String[] args )
     {
-        String departureIcao = null;
-        String arrivalIcao = null;
+        String validatedDepartureIcao = null;
+        String validatedArrivalIcao = null;
+        AirportValidator airportValidator = null;
 
-        // Check if command line arguments were provided
+        try {
+            airportValidator = new AirportValidator();
+        }
+        catch( final Exception e ) {
+            logger.error( "Failed to initialize AirportValidator: {}", e
+                    .getMessage() );
+            System.exit( 1 );
+        }
+
         if( args.length > 0 ) {
-            departureIcao = parseArg( args, "--departure" );
-            arrivalIcao = parseArg( args, "--arrival" );
+            final String departureArg = parseArg( args, "--departure" );
+            final String arrivalArg = parseArg( args, "--arrival" );
 
-            if( departureIcao == null || arrivalIcao == null ) {
-                logger.error("Usage: java -cp target/classes com.capstone.App --departure <ICAO> --arrival <ICAO>");
+            if( departureArg == null || arrivalArg == null ) {
+                logger.error(
+                        "Usage: ... --departure <ICAO> --arrival <ICAO>" );
+                System.exit( 1 );
+            }
+
+            try {
+                validatedDepartureIcao = airportValidator.validateIcaoInput(
+                        departureArg );
+                validatedArrivalIcao = airportValidator.validateIcaoInput(
+                        arrivalArg );
+            }
+            catch( final AirportNotFoundException e ) {
+                logger.error( "{}", e.getMessage() );
                 System.exit( 1 );
             }
         }
-        // If command line arguments are not provided, prompt the user for input
         else {
-            final Scanner scanner = new Scanner( System.in );
-
-            System.out.print( "Enter departure airport ICAO: " );
-            departureIcao = scanner.nextLine().trim().toUpperCase();
-
-            System.out.print( "Enter arrival airport ICAO: " );
-            arrivalIcao = scanner.nextLine().trim().toUpperCase();
-
-            scanner.close();
+            final String[] icaos = promptAndConfirmIcaos( airportValidator );
+            validatedDepartureIcao = icaos[0];
+            validatedArrivalIcao = icaos[1];
         }
 
         try {
-            final Airport departureAirport = new Airport( departureIcao );
-            final Airport arrivalAirport = new Airport( arrivalIcao );
+            final Airport departure = new Airport( validatedDepartureIcao,
+                    airportValidator );
+            final Airport arrival = new Airport( validatedArrivalIcao,
+                    airportValidator );
 
-            final FlightPath flightPath = new FlightPath( departureAirport,
-                    arrivalAirport );		
-            NotamFetcher fetcher = new NotamFetcher();
-            String json = fetcher.fetchByIcao( "KOKC", 1000, 1 );
+            final FlightPath flightPath = new FlightPath( departure, arrival );
 
+            final NotamFetcher fetcher = new NotamFetcher();
+            final String json = fetcher.fetchByIcao( "KOKC", 1000, 1 );
+            System.out.println( json );
             ObjectMapper mapper = new ObjectMapper();
             JsonNode rootNode = mapper.readTree( json );
 
@@ -63,13 +79,68 @@ public class App
 
         }
         catch( final Exception e ) {
-            logger.error("Application error", e);
+            logger.error( "Application error", e );
         }
     }
 
-    private static String parseArg( String[] args, String flag )
+    private static String[] promptAndConfirmIcaos( final AirportValidator airportValidator )
     {
-        // Loop through all args so they can be provided in any order
+        try (final Scanner scanner = new Scanner( System.in )) {
+            while( true ) {
+                final String[] resolved = resolveIcaoPair( scanner,
+                        airportValidator );
+                if( confirmIcaos( scanner, resolved[0], resolved[1] ) ) {
+                    return resolved;
+                }
+            }
+        }
+    }
+
+    private static String[] resolveIcaoPair( final Scanner scanner,
+                                             final AirportValidator airportValidator )
+    {
+        while( true ) {
+            System.out.print( "\n" );
+            final String rawDeparture = promptForIcao( scanner, "departure" );
+            final String rawArrival = promptForIcao( scanner, "arrival" );
+            try {
+                return new String[] { airportValidator.validateIcaoInput(
+                        rawDeparture ), airportValidator.validateIcaoInput(
+                                rawArrival ) };
+            }
+            catch( final AirportNotFoundException e ) {
+                System.out.println( "[ERROR] " + e.getMessage()
+                        + " - please try again." );
+            }
+        }
+    }
+
+    private static boolean confirmIcaos( final Scanner scanner,
+                                         final String departure,
+                                         final String arrival )
+    {
+        System.out.printf(
+                "Departure: %s | Arrival: %s%nIs this correct? (y/n): ",
+                departure, arrival );
+        while( true ) {
+            final String answer = scanner.nextLine().trim().toLowerCase();
+            if( answer.equals( "y" ) || answer.equals( "yes" ) )
+                return true;
+            if( answer.equals( "n" ) || answer.equals( "no" ) )
+                return false;
+            System.out.print( "Please enter 'y' or 'n': " );
+        }
+    }
+
+    private static String promptForIcao( final Scanner scanner,
+                                         final String label )
+    {
+        System.out.print( "Enter " + label + " airport ICAO: " );
+        return scanner.nextLine().trim().toUpperCase();
+    }
+
+    private static String parseArg( final String[] args, final String flag )
+    {
         for( int i = 0; i < args.length - 1; i++ ) {
             if( flag.equals( args[i] ) ) {
                 return args[i + 1].trim().toUpperCase();
