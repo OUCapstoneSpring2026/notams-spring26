@@ -88,7 +88,7 @@ cd notams-spring26/notams
 ## 4. Configure Environment Variables
 
 This project requires FAA NOTAM API credentials. These credentials must be
-stored in a `.env` file and **should not be committed to Git, verify that 
+stored in a `.env` file and **should not be committed to Git. Verify that 
 `.env` is listed in .gitignore**.
 
 ### Create the `.env` file
@@ -103,6 +103,12 @@ Add the following entries to the `.env` file:
 ```
 CLIENT_ID=your_client_id_here
 CLIENT_SECRET=your_client_secret_here
+
+# Authentication endpoint used to obtain access token
+NMS_AUTH_URL=https://api-staging.cgifederal-aim.com/v1/auth/token
+
+# NOTAM data endpoint used to query NOTAMs
+NMS_NOTAM_BASE_URL=https://api-staging.cgifederal-aim.com/nmsapi/v1/notams
 ```
 
 These values are used by the application to authenticate requests to the FAA
