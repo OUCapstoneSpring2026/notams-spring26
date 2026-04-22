@@ -13,17 +13,18 @@ import java.util.List;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 
-public class NotamParser
+public class NotamParser implements NotamParserInterface
 {
 	private final ObjectMapper mapper = new ObjectMapper();
 	private static final Logger logger = LogManager.getLogger();
 
-	/**
-	 * Parses the provided JSON string and returns a list of Notam objects.
-	 */
-	public List<Notam> parseNotams( String jsonResponse )
-	{
-		final List<Notam> notamList = new ArrayList<>();
+    /**
+     * Parses the provided JSON string and returns a list of Notam objects.
+     */
+    @Override
+    public List<Notam> parseNotams( String jsonResponse )
+    {
+        final List<Notam> notamList = new ArrayList<>();
 
 		try {
 			final JsonNode root = mapper.readTree( jsonResponse );
