@@ -11,6 +11,7 @@ import org.apache.logging.log4j.LogManager;
 
 import com.capstone.services.AirportValidator;
 import com.capstone.services.RouteNotamService;
+import com.capstone.services.NotamPrinter;
 
 import java.util.Scanner;
 
@@ -81,8 +82,8 @@ public class App
 			System.out.println( "Fetched " + notamCount
 					+ " NOTAMs successfully." );
 			System.out.println();
-			printCompactNotamTable( notamsNode );
-
+			NotamPrinter notamPrinter = new NotamPrinter();
+			notamPrinter.printCompactNotamTable( notamsNode );
 		}
 		catch( final Exception e ) {
 			logger.error( "Application error", e );
@@ -156,65 +157,4 @@ public class App
 		}
 		return null;
 	}
-
-	private static void printCompactNotamTable( JsonNode notamsNode )
-	{
-		System.out.printf( "% -5s %-10s %-12s %-20s %-20s %s%n".replace( "% ",
-				"%" ), "#", "Location", "Number", "Start Date UTC",
-				"End Date UTC", "Condition" );
-
-		if( !notamsNode.isArray() || notamsNode.isEmpty() ) {
-			System.out.println( "No NOTAMs found." );
-			return;
-		}
-
-		int count = 1;
-		for( JsonNode feature : notamsNode ) {
-			JsonNode notam = feature.path( "properties" ).path(
-					"coreNOTAMData" ).path( "notam" );
-
-			String location = notam.path( "location" ).asText( "N/A" );
-			String number = notam.path( "number" ).asText( "N/A" );
-			String start = formatUtc( notam.path( "effectiveStart" ).asText(
-					"N/A" ) );
-			String end = formatUtc( notam.path( "effectiveEnd" ).asText(
-					"N/A" ) );
-			String condition = extractCondition( notam.path( "text" ).asText(
-					"N/A" ) );
-
-			System.out.printf( "% -5s %-10s %-12s %-20s %-20s %s%n".replace(
-					"% ", "%" ), "#" + count, location, number, start, end,
-					condition );
-			count++;
-		}
-	}
-
-	private static String extractCondition( String text )
-	{
-		if( text == null || text.isBlank() ) {
-			return "N/A";
-		}
-
-		int index = text.indexOf( "E)" );
-		String condition = index != -1 ? text.substring( index + 2 ) : text;
-
-		condition = condition.replaceAll( "\\r?\\n", " " );
-		condition = condition.trim();
-
-		if( condition.length() > 100 ) {
-			condition = condition.substring( 0, 97 ) + "...";
-		}
-
-		return condition;
-	}
-
-	private static String formatUtc( String iso )
-	{
-		if( iso == null || iso.isBlank() || iso.equals( "N/A" ) ) {
-			return "N/A";
-		}
-
-		return iso.replace( "T", " " ).replace( "Z", "" );
-	}
-
 }
