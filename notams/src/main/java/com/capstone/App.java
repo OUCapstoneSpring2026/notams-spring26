@@ -2,13 +2,10 @@ package com.capstone;
 
 import com.capstone.exceptions.AirportNotFoundException;
 import com.capstone.models.Airport;
-import com.capstone.models.FlightPath;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
-
 import com.capstone.services.AirportValidator;
 
 import java.util.Scanner;
@@ -23,6 +20,8 @@ public class App
 		String validatedArrivalIcao = null;
 		AirportValidator airportValidator = null;
 
+		// Initialize the validator once so both command-line and interactive
+		// input go through the same ICAO validation logic.
 		try {
 			airportValidator = new AirportValidator();
 		}
@@ -32,6 +31,7 @@ public class App
 			System.exit( 1 );
 		}
 
+		// Support both command-line arguments and interactive terminal input.
 		if( args.length > 0 ) {
 			final String departureArg = parseArg( args, "--departure" );
 			final String arrivalArg = parseArg( args, "--arrival" );
@@ -60,34 +60,38 @@ public class App
 		}
 
 		try {
+			// Create Airport objects from validated ICAOs.
 			final Airport departure = new Airport( validatedDepartureIcao,
 					airportValidator );
 			final Airport arrival = new Airport( validatedArrivalIcao,
 					airportValidator );
 
-			final FlightPath flightPath = new FlightPath( departure, arrival );
+			// Keep the normal app flow based on departure and arrival,
+			// but print concise NOTAM output for the departure airport.
+			final NotamFetcher fetcher = new NotamFetcher();
+			final String json = fetcher.fetchByIcao( departure.getIcao() );
 
-			final NotamDataFetcher fetcher = new NmsNotamFetcher();
-			final String json = fetcher.fetchByIcao( validatedDepartureIcao );
+			final ObjectMapper mapper = new ObjectMapper();
+			final JsonNode rootNode = mapper.readTree( json );
 
-			ObjectMapper mapper = new ObjectMapper();
-			JsonNode rootNode = mapper.readTree( json );
-
-			JsonNode notamsNode = rootNode.path( "data" ).path( "geojson" );
-			int notamCount = notamsNode.isArray() ? notamsNode.size() : 0;
+			// NOTAMs are stored inside data.geojson in the API response.
+			final JsonNode notamsNode = rootNode.path( "data" ).path( "geojson" );
+			final int notamCount = notamsNode.isArray() ? notamsNode.size() : 0;
 
 			System.out.println(
 					"Fetched " + notamCount + " NOTAMs successfully." );
 			System.out.println();
-			printCompactNotamTable( notamsNode );
 
+			// Print a compact table instead of dumping raw JSON or object output.
+			printCompactNotamTable( notamsNode );
 		}
 		catch( final Exception e ) {
 			logger.error( "Application error", e );
 		}
 	}
 
-	private static String[] promptAndConfirmIcaos( final AirportValidator airportValidator )
+	private static String[] promptAndConfirmIcaos(
+			final AirportValidator airportValidator )
 	{
 		try (final Scanner scanner = new Scanner( System.in )) {
 			while( true ) {
@@ -101,12 +105,13 @@ public class App
 	}
 
 	private static String[] resolveIcaoPair( final Scanner scanner,
-											 final AirportValidator airportValidator )
+			final AirportValidator airportValidator )
 	{
 		while( true ) {
 			System.out.print( "\n" );
 			final String rawDeparture = promptForIcao( scanner, "departure" );
 			final String rawArrival = promptForIcao( scanner, "arrival" );
+
 			try {
 				return new String[] {
 						airportValidator.validateIcaoInput( rawDeparture ),
@@ -120,26 +125,29 @@ public class App
 	}
 
 	private static boolean confirmIcaos( final Scanner scanner,
-										 final String departure,
-										 final String arrival )
+			final String departure,
+			final String arrival )
 	{
 		System.out.printf(
 				"Departure: %s | Arrival: %s%nIs this correct? (y/n): ",
 				departure, arrival );
+
 		while( true ) {
 			final String answer = scanner.nextLine().trim().toLowerCase();
+
 			if( answer.equals( "y" ) || answer.equals( "yes" ) ) {
 				return true;
 			}
 			if( answer.equals( "n" ) || answer.equals( "no" ) ) {
 				return false;
 			}
+
 			System.out.print( "Please enter 'y' or 'n': " );
 		}
 	}
 
 	private static String promptForIcao( final Scanner scanner,
-										 final String label )
+			final String label )
 	{
 		System.out.print( "Enter " + label + " airport ICAO: " );
 		return scanner.nextLine().trim().toUpperCase();
@@ -155,51 +163,56 @@ public class App
 		return null;
 	}
 
-	private static void printCompactNotamTable( JsonNode notamsNode )
+	private static void printCompactNotamTable( final JsonNode notamsNode )
 	{
-		System.out.printf(
-				"% -5s %-10s %-12s %-20s %-20s %s%n".replace( "% ", "%" ), "#",
-				"Location", "Number", "Start Date UTC", "End Date UTC",
-				"Condition" );
-
 		if( !notamsNode.isArray() || notamsNode.isEmpty() ) {
 			System.out.println( "No NOTAMs found." );
 			return;
 		}
 
-		int count = 1;
-		for( JsonNode feature : notamsNode ) {
-			JsonNode notam = feature.path( "properties" )
-					.path( "coreNOTAMData" ).path( "notam" );
+		System.out.printf(
+				"%-5s %-10s %-12s %-20s %-20s %s%n",
+				"#", "Location", "Number", "Start Date UTC",
+				"End Date UTC", "Condition" );
 
-			String location = notam.path( "location" ).asText( "N/A" );
-			String number = notam.path( "number" ).asText( "N/A" );
-			String start = formatUtc(
+		int count = 1;
+
+		for( final JsonNode feature : notamsNode ) {
+			final JsonNode notam = feature.path( "properties" )
+					.path( "coreNOTAMData" )
+					.path( "notam" );
+
+			final String location = notam.path( "location" ).asText( "N/A" );
+			final String number = notam.path( "number" ).asText( "N/A" );
+			final String start = formatUtc(
 					notam.path( "effectiveStart" ).asText( "N/A" ) );
-			String end = formatUtc(
+			final String end = formatUtc(
 					notam.path( "effectiveEnd" ).asText( "N/A" ) );
-			String condition = extractCondition(
+			final String condition = extractCondition(
 					notam.path( "text" ).asText( "N/A" ) );
 
 			System.out.printf(
-					"% -5s %-10s %-12s %-20s %-20s %s%n".replace( "% ", "%" ),
+					"%-5s %-10s %-12s %-20s %-20s %s%n",
 					"#" + count, location, number, start, end, condition );
+
 			count++;
 		}
 	}
 
-	private static String extractCondition( String text )
+	private static String extractCondition( final String text )
 	{
 		if( text == null || text.isBlank() ) {
 			return "N/A";
 		}
 
-		int index = text.indexOf( "E)" );
+		// Many NOTAM messages place the actual operational condition after "E)".
+		final int index = text.indexOf( "E)" );
 		String condition = index != -1 ? text.substring( index + 2 ) : text;
 
-		condition = condition.replaceAll( "\\r?\\n", " " );
-		condition = condition.trim();
+		// Keep each NOTAM on a single terminal line.
+		condition = condition.replaceAll( "\\r?\\n", " " ).trim();
 
+		// Truncate long messages so the output stays compact and printable.
 		if( condition.length() > 100 ) {
 			condition = condition.substring( 0, 97 ) + "...";
 		}
@@ -207,13 +220,13 @@ public class App
 		return condition;
 	}
 
-	private static String formatUtc( String iso )
+	private static String formatUtc( final String iso )
 	{
 		if( iso == null || iso.isBlank() || iso.equals( "N/A" ) ) {
 			return "N/A";
 		}
 
+		// Convert ISO-style UTC timestamps into a simpler display format.
 		return iso.replace( "T", " " ).replace( "Z", "" );
 	}
-
 }
