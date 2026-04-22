@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 
 import com.capstone.services.AirportValidator;
+import com.capstone.services.RouteNotamService;
 
 import java.util.Scanner;
 
@@ -27,8 +28,8 @@ public class App
 			airportValidator = new AirportValidator();
 		}
 		catch( final Exception e ) {
-			logger.error( "Failed to initialize AirportValidator: {}",
-					e.getMessage() );
+			logger.error( "Failed to initialize AirportValidator: {}", e
+					.getMessage() );
 			System.exit( 1 );
 		}
 
@@ -67,8 +68,9 @@ public class App
 
 			final FlightPath flightPath = new FlightPath( departure, arrival );
 
-			final NotamDataFetcher fetcher = new NmsNotamFetcher();
-			final String json = fetcher.fetchByIcao( validatedDepartureIcao );
+			final RouteNotamService routeNotamService = new RouteNotamService();
+			final String json = routeNotamService.fetchNotamsAlongRoute(
+					flightPath );
 
 			ObjectMapper mapper = new ObjectMapper();
 			JsonNode rootNode = mapper.readTree( json );
@@ -76,8 +78,8 @@ public class App
 			JsonNode notamsNode = rootNode.path( "data" ).path( "geojson" );
 			int notamCount = notamsNode.isArray() ? notamsNode.size() : 0;
 
-			System.out.println(
-					"Fetched " + notamCount + " NOTAMs successfully." );
+			System.out.println( "Fetched " + notamCount
+					+ " NOTAMs successfully." );
 			System.out.println();
 			printCompactNotamTable( notamsNode );
 
@@ -100,28 +102,28 @@ public class App
 		}
 	}
 
-	private static String[] resolveIcaoPair( final Scanner scanner,
-											 final AirportValidator airportValidator )
+	private static String[] resolveIcaoPair(    final Scanner scanner,
+												final AirportValidator airportValidator )
 	{
 		while( true ) {
 			System.out.print( "\n" );
 			final String rawDeparture = promptForIcao( scanner, "departure" );
 			final String rawArrival = promptForIcao( scanner, "arrival" );
 			try {
-				return new String[] {
-						airportValidator.validateIcaoInput( rawDeparture ),
-						airportValidator.validateIcaoInput( rawArrival ) };
+				return new String[] { airportValidator.validateIcaoInput(
+						rawDeparture ), airportValidator.validateIcaoInput(
+								rawArrival ) };
 			}
 			catch( final AirportNotFoundException e ) {
-				System.out.println(
-						"[ERROR] " + e.getMessage() + " - please try again." );
+				System.out.println( "[ERROR] " + e.getMessage()
+						+ " - please try again." );
 			}
 		}
 	}
 
-	private static boolean confirmIcaos( final Scanner scanner,
-										 final String departure,
-										 final String arrival )
+	private static boolean confirmIcaos(    final Scanner scanner,
+											final String departure,
+											final String arrival )
 	{
 		System.out.printf(
 				"Departure: %s | Arrival: %s%nIs this correct? (y/n): ",
@@ -138,8 +140,8 @@ public class App
 		}
 	}
 
-	private static String promptForIcao( final Scanner scanner,
-										 final String label )
+	private static String promptForIcao(    final Scanner scanner,
+											final String label )
 	{
 		System.out.print( "Enter " + label + " airport ICAO: " );
 		return scanner.nextLine().trim().toUpperCase();
@@ -157,10 +159,9 @@ public class App
 
 	private static void printCompactNotamTable( JsonNode notamsNode )
 	{
-		System.out.printf(
-				"% -5s %-10s %-12s %-20s %-20s %s%n".replace( "% ", "%" ), "#",
-				"Location", "Number", "Start Date UTC", "End Date UTC",
-				"Condition" );
+		System.out.printf( "% -5s %-10s %-12s %-20s %-20s %s%n".replace( "% ",
+				"%" ), "#", "Location", "Number", "Start Date UTC",
+				"End Date UTC", "Condition" );
 
 		if( !notamsNode.isArray() || notamsNode.isEmpty() ) {
 			System.out.println( "No NOTAMs found." );
@@ -169,21 +170,21 @@ public class App
 
 		int count = 1;
 		for( JsonNode feature : notamsNode ) {
-			JsonNode notam = feature.path( "properties" )
-					.path( "coreNOTAMData" ).path( "notam" );
+			JsonNode notam = feature.path( "properties" ).path(
+					"coreNOTAMData" ).path( "notam" );
 
 			String location = notam.path( "location" ).asText( "N/A" );
 			String number = notam.path( "number" ).asText( "N/A" );
-			String start = formatUtc(
-					notam.path( "effectiveStart" ).asText( "N/A" ) );
-			String end = formatUtc(
-					notam.path( "effectiveEnd" ).asText( "N/A" ) );
-			String condition = extractCondition(
-					notam.path( "text" ).asText( "N/A" ) );
+			String start = formatUtc( notam.path( "effectiveStart" ).asText(
+					"N/A" ) );
+			String end = formatUtc( notam.path( "effectiveEnd" ).asText(
+					"N/A" ) );
+			String condition = extractCondition( notam.path( "text" ).asText(
+					"N/A" ) );
 
-			System.out.printf(
-					"% -5s %-10s %-12s %-20s %-20s %s%n".replace( "% ", "%" ),
-					"#" + count, location, number, start, end, condition );
+			System.out.printf( "% -5s %-10s %-12s %-20s %-20s %s%n".replace(
+					"% ", "%" ), "#" + count, location, number, start, end,
+					condition );
 			count++;
 		}
 	}
