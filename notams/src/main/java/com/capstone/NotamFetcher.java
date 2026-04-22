@@ -13,7 +13,7 @@ import java.time.Duration;
 
 // This class returns raw Json. No mapping or parsing is done here
 
-public class NotamFetcher
+public class NotamFetcher implements NotamDataFetcher
 {
 	private static final String BASE_URL = "https://external-api.faa.gov/notamapi/v1/notams";
 	private static final int DEFAULT_PAGE_SIZE = 1000; // Large number to pull up to 1000 notams at once
@@ -35,7 +35,7 @@ public class NotamFetcher
 	}
 
 	// Package-private constructor for testing purposes
-	NotamFetcher(String clientId, String clientSecret, HttpClient httpClient)
+	NotamFetcher( String clientId, String clientSecret, HttpClient httpClient )
 	{
 		this.clientId = clientId;
 		this.clientSecret = clientSecret;

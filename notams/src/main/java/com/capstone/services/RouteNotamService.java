@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.io.IOException;
 
+import com.capstone.NmsNotamFetcher;
+import com.capstone.NotamDataFetcher;
 import com.capstone.NotamFetcher;
 import com.capstone.models.Airport;
 
@@ -16,11 +18,16 @@ public class RouteNotamService
 {
 
 	// Handles communication with the FAA NOTAM API
-	private final NotamFetcher fetcher;
+	private final NotamDataFetcher fetcher;
 
 	public RouteNotamService()
 	{
-		this.fetcher = new NotamFetcher();
+		this( new NmsNotamFetcher() );
+	}
+
+	public RouteNotamService( final NotamDataFetcher fetcher )
+	{
+		this.fetcher = fetcher;
 	}
 
 	/**
