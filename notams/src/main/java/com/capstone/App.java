@@ -3,6 +3,7 @@ package com.capstone;
 import com.capstone.exceptions.AirportNotFoundException;
 import com.capstone.models.Airport;
 import com.capstone.models.FlightPath;
+import com.capstone.models.Notam;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -13,6 +14,7 @@ import com.capstone.services.AirportValidator;
 import com.capstone.services.RouteNotamService;
 import com.capstone.services.NotamPrinter;
 
+import java.util.List;
 import java.util.Scanner;
 
 public class App
@@ -70,20 +72,13 @@ public class App
 			final FlightPath flightPath = new FlightPath( departure, arrival );
 
 			final RouteNotamService routeNotamService = new RouteNotamService();
-			final String json = routeNotamService.fetchNotamsAlongRoute(
+			final List<Notam> notams = routeNotamService.fetchNotamsAlongRoute(
 					flightPath );
 
-			ObjectMapper mapper = new ObjectMapper();
-			JsonNode rootNode = mapper.readTree( json );
-
-			JsonNode notamsNode = rootNode.path( "data" ).path( "geojson" );
-			int notamCount = notamsNode.isArray() ? notamsNode.size() : 0;
-
-			System.out.println( "Fetched " + notamCount
-					+ " NOTAMs successfully." );
-			System.out.println();
+			System.out.println( "Fetched " + notams.size()
+					+ " NOTAMs successfully.\n" );
 			NotamPrinter notamPrinter = new NotamPrinter();
-			notamPrinter.printCompactNotamTable( notamsNode );
+			notamPrinter.printCompactNotamTable( notams );
 		}
 		catch( final Exception e ) {
 			logger.error( "Application error", e );
