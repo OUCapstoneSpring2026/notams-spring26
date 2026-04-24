@@ -105,21 +105,17 @@ public class NMSNotamParser implements NotamParserInterface
                     final String notamId = notamNode.path( "id" ).asText();
                     final String notamNumber = notamNode.path( "number" )
                             .asText();
-                    final String notamType = notamNode.path( "type" ).asText();
                     final String notamText = notamNode.path( "text" ).asText();
 
                     // Skip NOTAMs that are missing the 7 required fields, but log which fields are missing and add to a list.
-                    if( notamId.isBlank() || notamNumber.isBlank() || notamType
-                            .isBlank() || notamText.isBlank() || issued == null
-                            || effectiveStart == null || effectiveEnd
-                                    == null ) {
+                    if( notamId.isBlank() || notamNumber.isBlank() || notamText
+                            .isBlank() || issued == null || effectiveStart
+                                    == null || effectiveEnd == null ) {
 
                         final List<String> missingFields = new ArrayList<>();
                         addMissing( missingFields, notamId.isBlank(), "id" );
                         addMissing( missingFields, notamNumber.isBlank(),
                                 "number" );
-                        addMissing( missingFields, notamType.isBlank(),
-                                "type" );
                         addMissing( missingFields, notamText.isBlank(),
                                 "text" );
                         addMissing( missingFields, issued == null, "issued" );
@@ -163,7 +159,7 @@ public class NMSNotamParser implements NotamParserInterface
                     final Notam parsedNotam = Notam.builder()
                             .id( notamId )
                             .number( notamNumber )
-                            .type( notamType )
+                            .type( notamNode.path( "type" ).asText() )
                             .issued( issued )
                             .effectiveStart( effectiveStart )
                             .effectiveEnd( effectiveEnd )

@@ -133,13 +133,13 @@ public final class Notam {
 
         this.id = normalizeRequired(b.id, "id");
         this.number = normalizeRequired(b.number, "number");
-        this.type = normalizeRequired(b.type, "type");
         this.issued = Objects.requireNonNull(b.issued, "issued must not be null");
         this.effectiveStart = Objects.requireNonNull(b.effectiveStart, "effectiveStart must not be null");
         this.effectiveEnd = Objects.requireNonNull(b.effectiveEnd, "effectiveEnd must not be null");
         this.text = normalizeRequired(b.text, "text");
 
         // Optional fields
+        this.type = normalizeOptional(b.type);
         this.series = normalizeOptional(b.series);
         this.affectedFIR = normalizeOptional(b.affectedFIR);
         this.selectionCode = normalizeOptional(b.selectionCode);
@@ -183,8 +183,8 @@ public final class Notam {
     }
 
     /** Returns the NOTAM type code (e.g., N, C). */
-    public String getType() {
-        return type;
+    public Optional<String> getType() {
+        return Optional.ofNullable(type);
     }
 
     /** Returns the timestamp when the NOTAM was issued/published. */
