@@ -4,8 +4,8 @@ import java.awt.geom.Point2D;
 import java.io.IOException;
 import java.util.List;
 
-import com.capstone.NotamDataFetcher;
 import com.capstone.models.Notam;
+import com.capstone.fetching.NotamFetcherInterface;
 import com.capstone.models.FlightPath;
 
 import org.junit.jupiter.api.Test;
@@ -23,16 +23,16 @@ public class RouteNotamServiceTest
 	public void fetchNotamsAlongRoute_multipleWaypoints_returnsCombinedParsedNotams()   throws IOException,
 																						InterruptedException
 	{
-		NotamDataFetcher fetcher = mock( NotamDataFetcher.class );
+		NotamFetcherInterface fetcher = mock( NotamFetcherInterface.class );
 		FlightPath flightPath = mock( FlightPath.class );
 
 		List<Point2D> waypoints = List.of( new Point2D.Double( 45.0, -90.0 ),
 				new Point2D.Double( 46.0, -91.0 ) );
 
 		when( flightPath.getWaypoints() ).thenReturn( waypoints );
-		when( fetcher.fetchByLocation( 45.0, -90.0, 50 ) ).thenReturn(
+		when( fetcher.fetchByCoordinates( 45.0, -90.0, 50 ) ).thenReturn(
 				buildResponse( "id-1", "A0001/26" ) );
-		when( fetcher.fetchByLocation( 46.0, -91.0, 50 ) ).thenReturn(
+		when( fetcher.fetchByCoordinates( 46.0, -91.0, 50 ) ).thenReturn(
 				buildResponse( "id-2", "A0002/26" ) );
 
 		RouteNotamService service = new RouteNotamService( fetcher );
@@ -41,15 +41,15 @@ public class RouteNotamServiceTest
 		assertEquals( 2, result.size() );
 		assertEquals( "id-1", result.get( 0 ).getId() );
 		assertEquals( "id-2", result.get( 1 ).getId() );
-		verify( fetcher ).fetchByLocation( 45.0, -90.0, 50 );
-		verify( fetcher ).fetchByLocation( 46.0, -91.0, 50 );
+		verify( fetcher ).fetchByCoordinates( 45.0, -90.0, 50 );
+		verify( fetcher ).fetchByCoordinates( 46.0, -91.0, 50 );
 	}
 
 	@Test
 	public void fetchNotamsAlongRoute_noWaypoints_returnsEmptyNotamList()   throws IOException,
 																			InterruptedException
 	{
-		NotamDataFetcher fetcher = mock( NotamDataFetcher.class );
+		NotamFetcherInterface fetcher = mock( NotamFetcherInterface.class );
 		FlightPath flightPath = mock( FlightPath.class );
 		when( flightPath.getWaypoints() ).thenReturn( List.of() );
 
@@ -64,11 +64,11 @@ public class RouteNotamServiceTest
 	public void fetchNotamsAlongRoute_fetcherThrowsIOException_propagatesException()    throws IOException,
 																						InterruptedException
 	{
-		NotamDataFetcher fetcher = mock( NotamDataFetcher.class );
+		NotamFetcherInterface fetcher = mock( NotamFetcherInterface.class );
 		FlightPath flightPath = mock( FlightPath.class );
 		when( flightPath.getWaypoints() ).thenReturn( List.of(
 				new Point2D.Double( 45.0, -90.0 ) ) );
-		when( fetcher.fetchByLocation( 45.0, -90.0, 50 ) ).thenThrow(
+		when( fetcher.fetchByCoordinates( 45.0, -90.0, 50 ) ).thenThrow(
 				new IOException( "network failure" ) );
 
 		RouteNotamService service = new RouteNotamService( fetcher );

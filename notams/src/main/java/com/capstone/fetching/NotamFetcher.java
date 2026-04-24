@@ -1,4 +1,4 @@
-package com.capstone;
+package com.capstone.fetching;
 
 import com.capstone.exceptions.NotamApiException;
 
@@ -13,7 +13,7 @@ import java.time.Duration;
 
 // This class returns raw Json. No mapping or parsing is done here
 
-public class NotamFetcher implements NotamDataFetcher
+public class NotamFetcher implements NotamFetcherInterface
 {
 	private static final String BASE_URL = "https://external-api.faa.gov/notamapi/v1/notams";
 	private static final int DEFAULT_PAGE_SIZE = 1000; // Large number to pull up to 1000 notams at once
@@ -43,15 +43,16 @@ public class NotamFetcher implements NotamDataFetcher
 	}
 
 	// Overload: defaults to page 1 and DEFAULT_PAGE_SIZE results.
-	public String fetchByIcao( String icaoCode )
-			throws IOException, InterruptedException
+	public String fetchByIcao( String icaoCode )    throws IOException,
+													InterruptedException
 	{
 		return fetchByIcao( icaoCode, DEFAULT_PAGE_SIZE, 1 );
 	}
 
 	// Overload: can specify pageNum and pageSize
 	public String fetchByIcao( String icaoCode, int pageSize, int pageNum )
-			throws IOException, InterruptedException
+																			throws IOException,
+																			InterruptedException
 	{
 
 		validateIcaoCode( icaoCode );
@@ -59,64 +60,60 @@ public class NotamFetcher implements NotamDataFetcher
 
 		String icao = icaoCode.toUpperCase();
 
-		String url =
-				BASE_URL + "?" + "responseFormat=geoJson" + "&icaoLocation="
-						+ icao + "&pageSize=" + pageSize + "&pageNum="
-						+ pageNum;
+		String url = BASE_URL + "?" + "responseFormat=geoJson"
+				+ "&icaoLocation=" + icao + "&pageSize=" + pageSize
+				+ "&pageNum=" + pageNum;
 
 		return sendRequest( url );
 	}
 
 	// Overload: defaults to page 1 and DEFAULT_PAGE_SIZE results.
-	public String fetchByLocation( double latitude,
-								   double longitude,
-								   double radiusNm )
-			throws IOException, InterruptedException
+	public String fetchByCoordinates(   double latitude,
+										double longitude,
+										double radiusNm )   throws IOException,
+															InterruptedException
 	{
-		return fetchByLocation( latitude, longitude, radiusNm,
+		return fetchByCoordinates( latitude, longitude, radiusNm,
 				DEFAULT_PAGE_SIZE, 1 );
 	}
 
 	// Overload: can specify pageSize and pageNum.
-	public String fetchByLocation( double latitude,
-								   double longitude,
-								   double radiusNm,
-								   int pageSize,
-								   int pageNum )
-			throws IOException, InterruptedException
+	public String fetchByCoordinates(   double latitude,
+										double longitude,
+										double radiusNm,
+										int pageSize,
+										int pageNum )   throws IOException,
+														InterruptedException
 	{
 
 		validateCoordinates( latitude, longitude );
 		validateRadius( radiusNm );
 		validatePagination( pageSize, pageNum );
 
-		String url =
-				BASE_URL + "?" + "responseFormat=geoJson" + "&locationLatitude="
-						+ latitude + "&locationLongitude=" + longitude
-						+ "&locationRadius=" + radiusNm + "&pageSize="
-						+ pageSize + "&pageNum=" + pageNum;
+		String url = BASE_URL + "?" + "responseFormat=geoJson"
+				+ "&locationLatitude=" + latitude + "&locationLongitude="
+				+ longitude + "&locationRadius=" + radiusNm + "&pageSize="
+				+ pageSize + "&pageNum=" + pageNum;
 
 		return sendRequest( url );
 	}
 
 	// This sends the http get request, it enforces the required headers and a 30-second timeout
-	private String sendRequest( String url )
-			throws IOException, InterruptedException
+	private String sendRequest( String url )    throws IOException,
+												InterruptedException
 	{
 		HttpRequest request = HttpRequest.newBuilder().uri( URI.create( url ) )
-				.header( "client_id", clientId )
-				.header( "client_secret", clientSecret )
-				.header( "Accept", "application/json" ).GET().timeout( TIMEOUT )
-				.build();
+				.header( "client_id", clientId ).header( "client_secret",
+						clientSecret ).header( "Accept", "application/json" )
+				.GET().timeout( TIMEOUT ).build();
 
 		HttpResponse<String> response = httpClient.send( request,
 				HttpResponse.BodyHandlers.ofString() );
 
 		int status = response.statusCode();
 		if( !(status >= 200 && status < 300) ) {
-			throw new NotamApiException( status,
-					"NOTAM API returned HTTP " + status + ": "
-							+ response.body() );
+			throw new NotamApiException( status, "NOTAM API returned HTTP "
+					+ status + ": " + response.body() );
 		}
 
 		return response.body();
@@ -131,10 +128,9 @@ public class NotamFetcher implements NotamDataFetcher
 					"ICAO code must not be null or blank" );
 		}
 		if( !icaoCode.matches( "^[A-Za-z][A-Za-z0-9]{3}$" ) ) {
-			throw new IllegalArgumentException(
-					"Invalid ICAO code: '" + icaoCode
-							+ "'. Expected a letter followed by"
-							+ " 3 alphanumeric characters." );
+			throw new IllegalArgumentException( "Invalid ICAO code: '"
+					+ icaoCode + "'. Expected a letter followed by"
+					+ " 3 alphanumeric characters." );
 		}
 	}
 
@@ -155,9 +151,8 @@ public class NotamFetcher implements NotamDataFetcher
 	private static void validateRadius( double radiusNm )
 	{
 		if( radiusNm <= 0 || radiusNm > MAX_RADIUS_NM ) {
-			throw new IllegalArgumentException(
-					"Radius must be between 0 and " + MAX_RADIUS_NM
-							+ ", currently: " + radiusNm );
+			throw new IllegalArgumentException( "Radius must be between 0 and "
+					+ MAX_RADIUS_NM + ", currently: " + radiusNm );
 		}
 	}
 
@@ -178,8 +173,8 @@ public class NotamFetcher implements NotamDataFetcher
 	{
 		String value = dotenv.get( key );
 		if( value == null || value.isBlank() ) {
-			throw new IllegalArgumentException(
-					key + " is missing from .env file" );
+			throw new IllegalArgumentException( key
+					+ " is missing from .env file" );
 		}
 		return value;
 	}

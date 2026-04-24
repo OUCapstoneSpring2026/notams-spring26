@@ -14,17 +14,17 @@ import static org.mockito.Mockito.when;
 public class AirportTest
 {
 
-    // getIcao()
+    // getAirportCode()
 
     @Test
-    public void getIcao_returnsExactIcaoPassedIn() throws Exception
+    public void getAirportCode_returnsExactAirportCodePassedIn() throws Exception
     {
         AirportValidator validator = Mockito.mock( AirportValidator.class );
-        when( validator.getCoordsForIcao( "KJFK" ) ).thenReturn(
+        when( validator.getCoordsForAirportCode( "KJFK" ) ).thenReturn(
                 new Point2D.Double( 40.6413, -73.7781 ) );
 
         Airport airport = new Airport( "KJFK", validator );
-        assertEquals( "KJFK", airport.getIcao() );
+        assertEquals( "KJFK", airport.getAirportCode() );
     }
 
     // getCoords()
@@ -33,7 +33,7 @@ public class AirportTest
     public void constructor_fetchesCoordsFromValidator() throws Exception
     {
         AirportValidator validator = Mockito.mock( AirportValidator.class );
-        when( validator.getCoordsForIcao( "KJFK" ) ).thenReturn(
+        when( validator.getCoordsForAirportCode( "KJFK" ) ).thenReturn(
                 new Point2D.Double( 40.6413, -73.7781 ) );
 
         Airport airport = new Airport( "KJFK", validator );
@@ -45,7 +45,7 @@ public class AirportTest
     public void getCoords_returnsPoint2DInstance() throws Exception
     {
         AirportValidator validator = Mockito.mock( AirportValidator.class );
-        when( validator.getCoordsForIcao( "KLAX" ) ).thenReturn(
+        when( validator.getCoordsForAirportCode( "KLAX" ) ).thenReturn(
                 new Point2D.Double( 33.9425, -118.4081 ) );
 
         Airport airport = new Airport( "KLAX", validator );
@@ -53,27 +53,29 @@ public class AirportTest
     }
 
     @Test
-    public void constructor_passesIcaoToValidator() throws Exception
+    public void constructor_passesAirportCodeToValidator() throws Exception
     {
         AirportValidator validator = Mockito.mock( AirportValidator.class );
         Point2D coords = new Point2D.Double( 40.6413, -73.7781 );
-        when( validator.getCoordsForIcao( "KJFK" ) ).thenReturn( coords );
+        when( validator.getCoordsForAirportCode( "KJFK" ) ).thenReturn(
+                coords );
 
         Airport airport = new Airport( "KJFK", validator );
         assertNotNull( airport.getCoords() );
-        verify( validator ).getCoordsForIcao( "KJFK" );
+        verify( validator ).getCoordsForAirportCode( "KJFK" );
     }
 
     // AirportNotFoundException
 
     @Test
-    public void constructor_unknownIcao_throwsAirportNotFoundException() throws Exception
+    public void constructor_unknownAirportCode_throwsAirportNotFoundException() throws Exception
     {
         AirportValidator validator = Mockito.mock( AirportValidator.class );
-        when( validator.getCoordsForIcao( "ZZZZ" ) ).thenThrow(
-                new AirportNotFoundException( "ICAO coords not found: ZZZZ" ) );
+        when( validator.getCoordsForAirportCode( "ZZZZ" ) ).thenThrow(
+                new AirportNotFoundException(
+                        "Airport code not found: ZZZZ" ) );
 
-        assertThrows( AirportNotFoundException.class, () -> new Airport(
-                "ZZZZ", validator ) );
+        assertThrows( AirportNotFoundException.class, () -> new Airport( "ZZZZ",
+                validator ) );
     }
 }

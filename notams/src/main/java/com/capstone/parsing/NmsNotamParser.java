@@ -1,4 +1,4 @@
-package com.capstone;
+package com.capstone.parsing;
 
 import com.capstone.models.Notam;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -11,7 +11,7 @@ import java.util.List;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 
-public class NMSNotamParser implements NotamParserInterface
+public class NmsNotamParser implements NotamParserInterface
 {
     private final ObjectMapper mapper = new ObjectMapper();
     private static final Logger logger = LogManager.getLogger();
@@ -68,7 +68,9 @@ public class NMSNotamParser implements NotamParserInterface
                                 // If for some reason the Q-line has fewer than 5, print a warning to stderr,
                                 // this will not stop parsing unless the Q-line is missing or we don't find a line that starts with "Q)"
                                 if( qParts.length < 5 ) {
-                                    logger.trace("Q-line has fewer than 5 parts: {}", qLine);
+                                    logger.trace(
+                                            "Q-line has fewer than 5 parts: {}",
+                                            qLine );
                                 }
                                 // Extract affectedFIR from the first Q-line segment
                                 if( qParts.length > 0 ) {
@@ -88,7 +90,8 @@ public class NMSNotamParser implements NotamParserInterface
                             }
                             else {
                                 // if Q-line is missing, the selectionCode, traffic, etc., remain null as initialized above.
-                                logger.info("ICAO translation found, but missing the Q-line");
+                                logger.info(
+                                        "ICAO translation found, but missing the Q-line" );
                             }
                         }
                     }
@@ -160,27 +163,23 @@ public class NMSNotamParser implements NotamParserInterface
                         continue; // log and skip to the next NOTAM
                     }
 
-                    final Notam parsedNotam = Notam.builder()
-                            .id( notamId )
-                            .number( notamNumber )
-                            .type( notamType )
-                            .issued( issued )
-                            .effectiveStart( effectiveStart )
-                            .effectiveEnd( effectiveEnd )
-                            .text( notamText )
+                    final Notam parsedNotam = Notam.builder().id( notamId )
+                            .number( notamNumber ).type( notamType ).issued(
+                                    issued ).effectiveStart( effectiveStart )
+                            .effectiveEnd( effectiveEnd ).text( notamText )
                             .location( notamNode.path( "location" ).asText() )
-                            .classification( notamNode.path( "classification" ).asText() )
-                            .icaoLocation( notamNode.path( "icaoLocation" ).asText() )
-                            .coordinates( notamNode.path( "coordinates" ).asText() )
-                            .radius( notamNode.path( "radius" ).asText() )
-                            .series( notamNode.path( "series" ).asText() )
-                            .affectedFIR( affectedFIR )
-                            .formattedText( formattedText )
-                            .selectionCode( selectionCode )
-                            .traffic( traffic )
-                            .purpose( purpose )
-                            .scope( scope )
-                            .build();
+                            .classification( notamNode.path( "classification" )
+                                    .asText() ).icaoLocation( notamNode.path(
+                                            "icaoLocation" ).asText() )
+                            .coordinates( notamNode.path( "coordinates" )
+                                    .asText() ).radius( notamNode.path(
+                                            "radius" ).asText() ).series(
+                                                    notamNode.path( "series" )
+                                                            .asText() )
+                            .affectedFIR( affectedFIR ).formattedText(
+                                    formattedText ).selectionCode(
+                                            selectionCode ).traffic( traffic )
+                            .purpose( purpose ).scope( scope ).build();
 
                     notamList.add( parsedNotam );
                 }

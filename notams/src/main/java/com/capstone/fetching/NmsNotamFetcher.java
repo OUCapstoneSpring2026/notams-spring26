@@ -1,4 +1,4 @@
-package com.capstone;
+package com.capstone.fetching;
 
 import com.capstone.exceptions.NotamApiException;
 
@@ -29,7 +29,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * - Returns raw JSON as a String
  *
  */
-public class NmsNotamFetcher implements NotamDataFetcher
+public class NmsNotamFetcher implements NotamFetcherInterface
 {
 	// NM = Nautical Miles. Max allowed by API
 	private static final int MAX_RADIUS_NM = 100;
@@ -57,16 +57,16 @@ public class NmsNotamFetcher implements NotamDataFetcher
 		this.authUrl = requireEnv( dotenv, "NMS_AUTH_URL" );
 		this.notamBaseUrl = requireEnv( dotenv, "NMS_NOTAM_BASE_URL" );
 
-		this.httpClient = HttpClient.newBuilder()
-				.connectTimeout( REQUEST_TIMEOUT ).build();
+		this.httpClient = HttpClient.newBuilder().connectTimeout(
+				REQUEST_TIMEOUT ).build();
 	}
 
 	// Test-only constructor for injecting mock dependencies
-	NmsNotamFetcher( String clientId,
-					 String clientSecret,
-					 String authUrl,
-					 String notamBaseUrl,
-					 HttpClient httpClient )
+	NmsNotamFetcher(    String clientId,
+						String clientSecret,
+						String authUrl,
+						String notamBaseUrl,
+						HttpClient httpClient )
 	{
 		this.clientId = clientId;
 		this.clientSecret = clientSecret;
@@ -75,8 +75,8 @@ public class NmsNotamFetcher implements NotamDataFetcher
 		this.httpClient = httpClient;
 	}
 
-	public String fetchByIcao( String icaoCode )
-			throws IOException, InterruptedException
+	public String fetchByIcao( String icaoCode )    throws IOException,
+													InterruptedException
 	{
 		validateIcaoCode( icaoCode );
 
@@ -87,10 +87,10 @@ public class NmsNotamFetcher implements NotamDataFetcher
 		return sendNotamRequest( url );
 	}
 
-	public String fetchByLocation( double latitude,
-								   double longitude,
-								   double radiusNm )
-			throws IOException, InterruptedException
+	public String fetchByCoordinates(   double latitude,
+										double longitude,
+										double radiusNm )   throws IOException,
+															InterruptedException
 	{
 		validateCoordinates( latitude, longitude );
 		validateRadius( radiusNm );
@@ -102,25 +102,24 @@ public class NmsNotamFetcher implements NotamDataFetcher
 	}
 
 	// Sends the NOTAM request with the required headers.
-	private String sendNotamRequest( String url )
-			throws IOException, InterruptedException
+	private String sendNotamRequest( String url )   throws IOException,
+													InterruptedException
 	{
 		String token = getBearerToken();
 
 		HttpRequest request = HttpRequest.newBuilder().uri( URI.create( url ) )
-				.header( "Authorization", "Bearer " + token )
-				.header( "Accept", "application/json" )
-				.header( "nmsResponseFormat", "GEOJSON" ).GET()
-				.timeout( REQUEST_TIMEOUT ).build();
+				.header( "Authorization", "Bearer " + token ).header( "Accept",
+						"application/json" ).header( "nmsResponseFormat",
+								"GEOJSON" ).GET().timeout( REQUEST_TIMEOUT )
+				.build();
 
 		HttpResponse<String> response = httpClient.send( request,
 				HttpResponse.BodyHandlers.ofString() );
 
 		int status = response.statusCode();
 		if( status < 200 || status >= 300 ) {
-			throw new NotamApiException( status,
-					"NOTAM API returned HTTP " + status + ": "
-							+ response.body() );
+			throw new NotamApiException( status, "NOTAM API returned HTTP "
+					+ status + ": " + response.body() );
 		}
 
 		return response.body();
@@ -133,27 +132,24 @@ public class NmsNotamFetcher implements NotamDataFetcher
 			return bearerToken;
 		}
 
-		String basicAuth = Base64.getEncoder().encodeToString(
-				(clientId + ":" + clientSecret).getBytes(
-						StandardCharsets.UTF_8 ) );
+		String basicAuth = Base64.getEncoder().encodeToString( (clientId + ":"
+				+ clientSecret).getBytes( StandardCharsets.UTF_8 ) );
 
-		HttpRequest request = HttpRequest.newBuilder()
-				.uri( URI.create( authUrl ) )
-				.header( "Authorization", "Basic " + basicAuth )
+		HttpRequest request = HttpRequest.newBuilder().uri( URI.create(
+				authUrl ) ).header( "Authorization", "Basic " + basicAuth )
 				.header( "Content-Type", "application/x-www-form-urlencoded" )
-				.header( "Accept", "application/json" )
-				.POST( HttpRequest.BodyPublishers.ofString(
-						"grant_type=client_credentials" ) )
-				.timeout( REQUEST_TIMEOUT ).build();
+				.header( "Accept", "application/json" ).POST(
+						HttpRequest.BodyPublishers.ofString(
+								"grant_type=client_credentials" ) ).timeout(
+										REQUEST_TIMEOUT ).build();
 
 		HttpResponse<String> response = httpClient.send( request,
 				HttpResponse.BodyHandlers.ofString() );
 
 		int status = response.statusCode();
 		if( status < 200 || status >= 300 ) {
-			throw new NotamApiException( status,
-					"Token request returned HTTP " + status + ": "
-							+ response.body() );
+			throw new NotamApiException( status, "Token request returned HTTP "
+					+ status + ": " + response.body() );
 		}
 
 		String accessToken = parseAccessToken( response.body() );
@@ -215,10 +211,9 @@ public class NmsNotamFetcher implements NotamDataFetcher
 					"ICAO code must not be null or blank" );
 		}
 		if( !icaoCode.matches( "^[A-Za-z][A-Za-z0-9]{3}$" ) ) {
-			throw new IllegalArgumentException(
-					"Invalid ICAO code: '" + icaoCode
-							+ "'. Expected a letter followed by"
-							+ " 3 alphanumeric characters." );
+			throw new IllegalArgumentException( "Invalid ICAO code: '"
+					+ icaoCode + "'. Expected a letter followed by"
+					+ " 3 alphanumeric characters." );
 		}
 	}
 
@@ -249,8 +244,8 @@ public class NmsNotamFetcher implements NotamDataFetcher
 	{
 		String value = dotenv.get( key );
 		if( value == null || value.isBlank() ) {
-			throw new IllegalArgumentException(
-					key + " is missing from .env file" );
+			throw new IllegalArgumentException( key
+					+ " is missing from .env file" );
 		}
 		return value;
 	}

@@ -20,7 +20,7 @@ public class AirportValidator
     private static final String HEADER_ARPT_ID = "ARPT_ID";
     private static final String HEADER_LAT = "LAT_DECIMAL";
     private static final String HEADER_LON = "LONG_DECIMAL";
-    private final Map<String, Point2D> icaoCoordsMap;
+    private final Map<String, Point2D> airportCodeCoordsMap;
 
     public AirportValidator()
     {
@@ -37,7 +37,7 @@ public class AirportValidator
                         + filename );
             }
 
-            this.icaoCoordsMap = parseAirportCodeCoords( is );
+            this.airportCodeCoordsMap = parseAirportCodeCoords( is );
         }
         catch( final IOException e ) {
             throw new RuntimeException(
@@ -135,8 +135,8 @@ public class AirportValidator
     }
 
     /**
-     * Resolves a raw ICAO input string to a standardized 3 or 4-character ICAO
-     * code.
+     * Resolves a raw airport code input string to a standardized 3 or
+     * 4-character airport code.
      *
      * <p>Handles the ambiguity of 3-character inputs, which may be a US airport
      * code missing its {@code K} country prefix:
@@ -163,64 +163,67 @@ public class AirportValidator
      * @throws AirportNotFoundException
      *     if the code cannot be found, is ambiguous, or has an invalid length
      */
-    public String validateIcaoInput( final String rawAirportCode ) throws AirportNotFoundException
+    public String validateAirportCodeInput( final String rawAirportCode ) throws AirportNotFoundException
     {
         if( rawAirportCode == null ) {
-            throw new IllegalArgumentException( "ICAO input cannot be null" );
+            throw new IllegalArgumentException(
+                    "Airport code input cannot be null" );
         }
 
-        final String normalizedCode = rawAirportCode.trim().toUpperCase();
+        final String normalizedAirportCode = rawAirportCode.trim()
+                .toUpperCase();
 
-        return switch( normalizedCode.length() ) {
+        return switch( normalizedAirportCode.length() ) {
         case 4 -> {
-            if( icaoCoordsMap.containsKey( normalizedCode ) ) {
-                yield normalizedCode;
+            if( airportCodeCoordsMap.containsKey( normalizedAirportCode ) ) {
+                yield normalizedAirportCode;
             }
-            throw new AirportNotFoundException( "ICAO not found: "
-                    + normalizedCode );
+            throw new AirportNotFoundException( "Airport code not found: "
+                    + normalizedAirportCode );
         }
         case 3 -> {
-            final boolean exactMatchFound = icaoCoordsMap.containsKey(
-                    normalizedCode );
-            final boolean prefixedMatchFound = icaoCoordsMap.containsKey( "K"
-                    + normalizedCode );
+            final boolean exactMatchFound = airportCodeCoordsMap.containsKey(
+                    normalizedAirportCode );
+            final boolean prefixedMatchFound = airportCodeCoordsMap.containsKey(
+                    "K" + normalizedAirportCode );
             if( exactMatchFound && prefixedMatchFound ) {
                 throw new AirportNotFoundException(
-                        "Ambiguous ICAO input. Matches found for: "
-                                + normalizedCode + " and K" + normalizedCode );
+                        "Ambiguous airport code input. Matches found for: "
+                                + normalizedAirportCode + " and K"
+                                + normalizedAirportCode );
             }
             else if( exactMatchFound ) {
-                yield normalizedCode;
+                yield normalizedAirportCode;
             }
             else if( prefixedMatchFound ) {
-                yield "K" + normalizedCode;
+                yield "K" + normalizedAirportCode;
             }
             else {
-                throw new AirportNotFoundException( "ICAO not found: "
-                        + normalizedCode );
+                throw new AirportNotFoundException( "Airport code not found: "
+                        + normalizedAirportCode );
             }
         }
         case 2 -> {
-            final String prefixedCode = "K" + normalizedCode;
-            if( icaoCoordsMap.containsKey( prefixedCode ) ) {
+            final String prefixedCode = "K" + normalizedAirportCode;
+            if( airportCodeCoordsMap.containsKey( prefixedCode ) ) {
                 yield prefixedCode;
             }
-            throw new AirportNotFoundException( "ICAO not found: "
+            throw new AirportNotFoundException( "Airport code not found: "
                     + prefixedCode );
         }
-        default -> throw new AirportNotFoundException( "Invalid ICAO length: "
-                + normalizedCode );
+        default -> throw new AirportNotFoundException(
+                "Invalid airport code length: " + normalizedAirportCode );
         };
     }
 
     /**
-     * Returns the geographic coordinates for the given ICAO code.
+     * Returns the geographic coordinates for the given airport code.
      *
      * <p>The returned {@link Point2D} follows the project-wide convention:
      * {@code x} = latitude, {@code y} = longitude, both in decimal degrees.
      *
-     * @param validatedIcao
-     *     the validated ICAO code to look up (e.g. {@code "KJFK"})
+     * @param validatedAirportCode
+     *     the validated airport code to look up (e.g. {@code "KJFK"})
      *
      * @return a {@link Point2D.Double} containing the airport's latitude and
      *     longitude
@@ -228,12 +231,12 @@ public class AirportValidator
      * @throws AirportNotFoundException
      *     if no coordinates are found for the given code
      */
-    public Point2D getCoordsForIcao( final String validatedIcao ) throws AirportNotFoundException
+    public Point2D getCoordsForAirportCode( final String validatedAirportCode ) throws AirportNotFoundException
     {
-        final Point2D coords = icaoCoordsMap.get( validatedIcao );
+        final Point2D coords = airportCodeCoordsMap.get( validatedAirportCode );
         if( coords == null ) {
-            throw new AirportNotFoundException( "ICAO coords not found: "
-                    + validatedIcao );
+            throw new AirportNotFoundException(
+                    "Airport code coords not found: " + validatedAirportCode );
         }
         return coords;
     }

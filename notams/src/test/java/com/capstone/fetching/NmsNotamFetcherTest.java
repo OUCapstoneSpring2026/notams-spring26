@@ -1,4 +1,4 @@
-package com.capstone;
+package com.capstone.fetching;
 
 import com.capstone.exceptions.NotamApiException;
 
@@ -61,9 +61,9 @@ class NmsNotamFetcherTest
 		when( mockResponse.statusCode() ).thenReturn( 200 );
 		when( mockResponse.body() ).thenReturn( "{\"items\":[]}" );
 
-		when( mockHttpClient.send( any( HttpRequest.class ),
-				any( HttpResponse.BodyHandler.class ) ) ).thenReturn(
-				mockTokenResponse ).thenReturn( mockResponse );
+		when( mockHttpClient.send( any( HttpRequest.class ), any(
+				HttpResponse.BodyHandler.class ) ) ).thenReturn(
+						mockTokenResponse ).thenReturn( mockResponse );
 
 		String result = fetcher.fetchByIcao( "kokc" );
 
@@ -71,8 +71,8 @@ class NmsNotamFetcherTest
 
 		ArgumentCaptor<HttpRequest> captor = ArgumentCaptor.forClass(
 				HttpRequest.class );
-		verify( mockHttpClient, org.mockito.Mockito.times( 2 ) ).send(
-				captor.capture(), any( HttpResponse.BodyHandler.class ) );
+		verify( mockHttpClient, org.mockito.Mockito.times( 2 ) ).send( captor
+				.capture(), any( HttpResponse.BodyHandler.class ) );
 
 		java.util.List<HttpRequest> requests = captor.getAllValues();
 		HttpRequest tokenRequest = requests.get( 0 );
@@ -80,24 +80,21 @@ class NmsNotamFetcherTest
 
 		assertEquals( URI.create( AUTH_URL ), tokenRequest.uri() );
 		assertEquals( "POST", tokenRequest.method() );
-		assertEquals( "application/x-www-form-urlencoded",
-				tokenRequest.headers().firstValue( "Content-Type" )
-						.orElseThrow() );
-		assertEquals( "application/json",
-				tokenRequest.headers().firstValue( "Accept" ).orElseThrow() );
+		assertEquals( "application/x-www-form-urlencoded", tokenRequest
+				.headers().firstValue( "Content-Type" ).orElseThrow() );
+		assertEquals( "application/json", tokenRequest.headers().firstValue(
+				"Accept" ).orElseThrow() );
 		assertEquals( REQUEST_TIMEOUT, tokenRequest.timeout().orElseThrow() );
 
-		assertEquals( URI.create( BASE_URL + "?location=KOKC" ),
-				dataRequest.uri() );
+		assertEquals( URI.create( BASE_URL + "?location=KOKC" ), dataRequest
+				.uri() );
 		assertEquals( "GET", dataRequest.method() );
-		assertEquals( "Bearer test-token",
-				dataRequest.headers().firstValue( "Authorization" )
-						.orElseThrow() );
-		assertEquals( "application/json",
-				dataRequest.headers().firstValue( "Accept" ).orElseThrow() );
-		assertEquals( "GEOJSON",
-				dataRequest.headers().firstValue( "nmsResponseFormat" )
-						.orElseThrow() );
+		assertEquals( "Bearer test-token", dataRequest.headers().firstValue(
+				"Authorization" ).orElseThrow() );
+		assertEquals( "application/json", dataRequest.headers().firstValue(
+				"Accept" ).orElseThrow() );
+		assertEquals( "GEOJSON", dataRequest.headers().firstValue(
+				"nmsResponseFormat" ).orElseThrow() );
 		assertEquals( REQUEST_TIMEOUT, dataRequest.timeout().orElseThrow() );
 	}
 
@@ -110,9 +107,9 @@ class NmsNotamFetcherTest
 
 		when( mockResponse.statusCode() ).thenReturn( 500 );
 		when( mockResponse.body() ).thenReturn( "Internal Server Error" );
-		when( mockHttpClient.send( any( HttpRequest.class ),
-				any( HttpResponse.BodyHandler.class ) ) ).thenReturn(
-				mockTokenResponse ).thenReturn( mockResponse );
+		when( mockHttpClient.send( any( HttpRequest.class ), any(
+				HttpResponse.BodyHandler.class ) ) ).thenReturn(
+						mockTokenResponse ).thenReturn( mockResponse );
 
 		NotamApiException ex = assertThrows( NotamApiException.class,
 				() -> fetcher.fetchByIcao( "KOKC" ) );
@@ -122,23 +119,23 @@ class NmsNotamFetcherTest
 	}
 
 	@Test
-	void testFetchByIcao_tokenRequestFailure()
-			throws IOException, InterruptedException
+	void testFetchByIcao_tokenRequestFailure()  throws IOException,
+												InterruptedException
 	{
 		HttpResponse<String> mockTokenResponse = mock( HttpResponse.class );
 		when( mockTokenResponse.statusCode() ).thenReturn( 401 );
 		when( mockTokenResponse.body() ).thenReturn( "Unauthorized" );
 
-		when( mockHttpClient.send( any( HttpRequest.class ),
-				any( HttpResponse.BodyHandler.class ) ) ).thenReturn(
-				mockTokenResponse );
+		when( mockHttpClient.send( any( HttpRequest.class ), any(
+				HttpResponse.BodyHandler.class ) ) ).thenReturn(
+						mockTokenResponse );
 
 		NotamApiException ex = assertThrows( NotamApiException.class,
 				() -> fetcher.fetchByIcao( "KOKC" ) );
 
 		assertEquals( 401, ex.getStatusCode() );
-		assertTrue(
-				ex.getMessage().contains( "Token request returned HTTP 401" ) );
+		assertTrue( ex.getMessage().contains(
+				"Token request returned HTTP 401" ) );
 	}
 
 	@Test
@@ -148,10 +145,10 @@ class NmsNotamFetcherTest
 		when( mockTokenResponse.statusCode() ).thenReturn( 200 );
 		when( mockTokenResponse.body() ).thenReturn( TOKEN_RESPONSE );
 
-		when( mockHttpClient.send( any( HttpRequest.class ),
-				any( HttpResponse.BodyHandler.class ) ) ).thenReturn(
-						mockTokenResponse )
-				.thenThrow( new IOException( "Connection refused" ) );
+		when( mockHttpClient.send( any( HttpRequest.class ), any(
+				HttpResponse.BodyHandler.class ) ) ).thenReturn(
+						mockTokenResponse ).thenThrow( new IOException(
+								"Connection refused" ) );
 
 		assertThrows( IOException.class, () -> fetcher.fetchByIcao( "KOKC" ) );
 	}
@@ -161,23 +158,23 @@ class NmsNotamFetcherTest
 	@Test
 	void testFetchByIcao_nullCode()
 	{
-		assertThrows( IllegalArgumentException.class,
-				() -> fetcher.fetchByIcao( null ) );
+		assertThrows( IllegalArgumentException.class, () -> fetcher.fetchByIcao(
+				null ) );
 	}
 
 	@ParameterizedTest
 	@ValueSource(strings = { "", "   ", "KOK", "KOKCC", "1OKC", "KO@C" })
 	void testFetchByIcao_invalidCodes( String code )
 	{
-		assertThrows( IllegalArgumentException.class,
-				() -> fetcher.fetchByIcao( code ) );
+		assertThrows( IllegalArgumentException.class, () -> fetcher.fetchByIcao(
+				code ) );
 	}
 
-	// fetchByLocation
+	// fetchByCoordinates
 
 	@Test
-	void testFetchByLocation_validCoords()
-			throws IOException, InterruptedException
+	void testFetchByCoordinates_validCoords()   throws IOException,
+												InterruptedException
 	{
 		HttpResponse<String> mockTokenResponse = mock( HttpResponse.class );
 		when( mockTokenResponse.statusCode() ).thenReturn( 200 );
@@ -185,18 +182,18 @@ class NmsNotamFetcherTest
 
 		when( mockResponse.statusCode() ).thenReturn( 200 );
 		when( mockResponse.body() ).thenReturn( "{\"items\":[]}" );
-		when( mockHttpClient.send( any( HttpRequest.class ),
-				any( HttpResponse.BodyHandler.class ) ) ).thenReturn(
-				mockTokenResponse ).thenReturn( mockResponse );
+		when( mockHttpClient.send( any( HttpRequest.class ), any(
+				HttpResponse.BodyHandler.class ) ) ).thenReturn(
+						mockTokenResponse ).thenReturn( mockResponse );
 
-		String result = fetcher.fetchByLocation( 35.393, -97.600, 50 );
+		String result = fetcher.fetchByCoordinates( 35.393, -97.600, 50 );
 
 		assertEquals( "{\"items\":[]}", result );
 
 		ArgumentCaptor<HttpRequest> captor = ArgumentCaptor.forClass(
 				HttpRequest.class );
-		verify( mockHttpClient, org.mockito.Mockito.times( 2 ) ).send(
-				captor.capture(), any( HttpResponse.BodyHandler.class ) );
+		verify( mockHttpClient, org.mockito.Mockito.times( 2 ) ).send( captor
+				.capture(), any( HttpResponse.BodyHandler.class ) );
 
 		HttpRequest dataRequest = captor.getAllValues().get( 1 );
 		String uri = dataRequest.uri().toString();
@@ -207,8 +204,8 @@ class NmsNotamFetcherTest
 	}
 
 	@Test
-	void testFetchByLocation_unauthorized()
-			throws IOException, InterruptedException
+	void testFetchByCoordinates_unauthorized()  throws IOException,
+												InterruptedException
 	{
 		HttpResponse<String> mockTokenResponse = mock( HttpResponse.class );
 		when( mockTokenResponse.statusCode() ).thenReturn( 200 );
@@ -216,72 +213,72 @@ class NmsNotamFetcherTest
 
 		when( mockResponse.statusCode() ).thenReturn( 401 );
 		when( mockResponse.body() ).thenReturn( "Unauthorized" );
-		when( mockHttpClient.send( any( HttpRequest.class ),
-				any( HttpResponse.BodyHandler.class ) ) ).thenReturn(
-				mockTokenResponse ).thenReturn( mockResponse );
+		when( mockHttpClient.send( any( HttpRequest.class ), any(
+				HttpResponse.BodyHandler.class ) ) ).thenReturn(
+						mockTokenResponse ).thenReturn( mockResponse );
 
 		NotamApiException ex = assertThrows( NotamApiException.class,
-				() -> fetcher.fetchByLocation( 35.0, -97.0, 50 ) );
+				() -> fetcher.fetchByCoordinates( 35.0, -97.0, 50 ) );
 
 		assertEquals( 401, ex.getStatusCode() );
 		assertTrue( ex.getMessage().contains( "Unauthorized" ) );
 	}
 
 	@Test
-	void testFetchByLocation_interruptedException()
-			throws IOException, InterruptedException
+	void testFetchByCoordinates_interruptedException()  throws IOException,
+														InterruptedException
 	{
 		HttpResponse<String> mockTokenResponse = mock( HttpResponse.class );
 		when( mockTokenResponse.statusCode() ).thenReturn( 200 );
 		when( mockTokenResponse.body() ).thenReturn( TOKEN_RESPONSE );
 
-		when( mockHttpClient.send( any( HttpRequest.class ),
-				any( HttpResponse.BodyHandler.class ) ) ).thenReturn(
-						mockTokenResponse )
-				.thenThrow( new InterruptedException( "Interrupted" ) );
+		when( mockHttpClient.send( any( HttpRequest.class ), any(
+				HttpResponse.BodyHandler.class ) ) ).thenReturn(
+						mockTokenResponse ).thenThrow( new InterruptedException(
+								"Interrupted" ) );
 
-		assertThrows( InterruptedException.class,
-				() -> fetcher.fetchByLocation( 35.0, -97.0, 50 ) );
+		assertThrows( InterruptedException.class, () -> fetcher
+				.fetchByCoordinates( 35.0, -97.0, 50 ) );
 	}
 
 	// coordinate validation
 
 	@Test
-	void testFetchByLocation_invalidCoordinates()
+	void testFetchByCoordinates_invalidCoordinates()
 	{
-		assertThrows( IllegalArgumentException.class,
-				() -> fetcher.fetchByLocation( 91.0, -97.0, 50 ) );
+		assertThrows( IllegalArgumentException.class, () -> fetcher
+				.fetchByCoordinates( 91.0, -97.0, 50 ) );
 
-		assertThrows( IllegalArgumentException.class,
-				() -> fetcher.fetchByLocation( -91.0, -97.0, 50 ) );
+		assertThrows( IllegalArgumentException.class, () -> fetcher
+				.fetchByCoordinates( -91.0, -97.0, 50 ) );
 
-		assertThrows( IllegalArgumentException.class,
-				() -> fetcher.fetchByLocation( 35.0, 181.0, 50 ) );
+		assertThrows( IllegalArgumentException.class, () -> fetcher
+				.fetchByCoordinates( 35.0, 181.0, 50 ) );
 
-		assertThrows( IllegalArgumentException.class,
-				() -> fetcher.fetchByLocation( 35.0, -181.0, 50 ) );
+		assertThrows( IllegalArgumentException.class, () -> fetcher
+				.fetchByCoordinates( 35.0, -181.0, 50 ) );
 	}
 
 	// radius validation
 
 	@Test
-	void testFetchByLocation_invalidRadius()
+	void testFetchByCoordinates_invalidRadius()
 	{
-		assertThrows( IllegalArgumentException.class,
-				() -> fetcher.fetchByLocation( 35.0, -97.0, 0 ) );
+		assertThrows( IllegalArgumentException.class, () -> fetcher
+				.fetchByCoordinates( 35.0, -97.0, 0 ) );
 
-		assertThrows( IllegalArgumentException.class,
-				() -> fetcher.fetchByLocation( 35.0, -97.0, -10 ) );
+		assertThrows( IllegalArgumentException.class, () -> fetcher
+				.fetchByCoordinates( 35.0, -97.0, -10 ) );
 
-		assertThrows( IllegalArgumentException.class,
-				() -> fetcher.fetchByLocation( 35.0, -97.0, 101 ) );
+		assertThrows( IllegalArgumentException.class, () -> fetcher
+				.fetchByCoordinates( 35.0, -97.0, 101 ) );
 	}
 
 	// boundary coordinate and radius values
 
 	@Test
-	void testFetchByLocation_boundaryValues()
-			throws IOException, InterruptedException
+	void testFetchByCoordinates_boundaryValues()    throws IOException,
+													InterruptedException
 	{
 		HttpResponse<String> mockTokenResponse = mock( HttpResponse.class );
 		when( mockTokenResponse.statusCode() ).thenReturn( 200 );
@@ -289,21 +286,21 @@ class NmsNotamFetcherTest
 
 		when( mockResponse.statusCode() ).thenReturn( 200 );
 		when( mockResponse.body() ).thenReturn( "{\"items\":[]}" );
-		when( mockHttpClient.send( any( HttpRequest.class ),
-				any( HttpResponse.BodyHandler.class ) ) ).thenReturn(
+		when( mockHttpClient.send( any( HttpRequest.class ), any(
+				HttpResponse.BodyHandler.class ) ) ).thenReturn(
 						mockTokenResponse ).thenReturn( mockResponse )
-				.thenReturn( mockResponse );
+						.thenReturn( mockResponse );
 
-		String result1 = fetcher.fetchByLocation( 90.0, 180.0, 100 );
+		String result1 = fetcher.fetchByCoordinates( 90.0, 180.0, 100 );
 		assertEquals( "{\"items\":[]}", result1 );
 
-		String result2 = fetcher.fetchByLocation( -90.0, -180.0, 0.5 );
+		String result2 = fetcher.fetchByCoordinates( -90.0, -180.0, 0.5 );
 		assertEquals( "{\"items\":[]}", result2 );
 	}
 
 	@Test
-	void testFetchByIcao_reusesValidBearerToken()
-			throws IOException, InterruptedException
+	void testFetchByIcao_reusesValidBearerToken()   throws IOException,
+													InterruptedException
 	{
 		HttpResponse<String> mockTokenResponse = mock( HttpResponse.class );
 		when( mockTokenResponse.statusCode() ).thenReturn( 200 );
@@ -312,10 +309,10 @@ class NmsNotamFetcherTest
 		when( mockResponse.statusCode() ).thenReturn( 200 );
 		when( mockResponse.body() ).thenReturn( "{\"items\":[]}" );
 
-		when( mockHttpClient.send( any( HttpRequest.class ),
-				any( HttpResponse.BodyHandler.class ) ) ).thenReturn(
+		when( mockHttpClient.send( any( HttpRequest.class ), any(
+				HttpResponse.BodyHandler.class ) ) ).thenReturn(
 						mockTokenResponse ).thenReturn( mockResponse )
-				.thenReturn( mockResponse );
+						.thenReturn( mockResponse );
 
 		String firstResult = fetcher.fetchByIcao( "KOKC" );
 		String secondResult = fetcher.fetchByIcao( "KOKC" );
@@ -325,14 +322,14 @@ class NmsNotamFetcherTest
 
 		ArgumentCaptor<HttpRequest> captor = ArgumentCaptor.forClass(
 				HttpRequest.class );
-		verify( mockHttpClient, org.mockito.Mockito.times( 3 ) ).send(
-				captor.capture(), any( HttpResponse.BodyHandler.class ) );
+		verify( mockHttpClient, org.mockito.Mockito.times( 3 ) ).send( captor
+				.capture(), any( HttpResponse.BodyHandler.class ) );
 
 		java.util.List<HttpRequest> requests = captor.getAllValues();
 		assertEquals( URI.create( AUTH_URL ), requests.get( 0 ).uri() );
-		assertEquals( URI.create( BASE_URL + "?location=KOKC" ),
-				requests.get( 1 ).uri() );
-		assertEquals( URI.create( BASE_URL + "?location=KOKC" ),
-				requests.get( 2 ).uri() );
+		assertEquals( URI.create( BASE_URL + "?location=KOKC" ), requests.get(
+				1 ).uri() );
+		assertEquals( URI.create( BASE_URL + "?location=KOKC" ), requests.get(
+				2 ).uri() );
 	}
 }

@@ -11,85 +11,85 @@ public class AirportValidatorTest
     private final String TEST_CSV_MALFORMED = "airportCoordsTest-malformed.csv";
 
     @Test
-    public void parseIcaoInput_fourCharCode_returnsAsIs() throws Exception
+    public void parseAirportCodeInput_fourCharCode_returnsAsIs() throws Exception
     {
         AirportValidator validator = new AirportValidator( TEST_CSV );
-        String result = validator.validateIcaoInput( "KJFK" );
+        String result = validator.validateAirportCodeInput( "KJFK" );
         assertEquals( "KJFK", result );
     }
 
     @Test
-    public void parseIcaoInput_threeCharCode_whenOnlyPrefixedMatch_returnsPrefixedCode() throws Exception
+    public void parseAirportCodeInput_threeCharCode_whenOnlyPrefixedMatch_returnsPrefixedCode() throws Exception
     {
         AirportValidator validator = new AirportValidator( TEST_CSV );
-        String result = validator.validateIcaoInput( "JFK" );
+        String result = validator.validateAirportCodeInput( "JFK" );
         assertEquals( "KJFK", result );
     }
 
     @Test
-    public void parseIcaoInput_threeCharCode_whenOnlyExactMatch_returnsExactCode() throws Exception
+    public void parseAirportCodeInput_threeCharCode_whenOnlyExactMatch_returnsExactCode() throws Exception
     {
         AirportValidator validator = new AirportValidator( TEST_CSV );
-        String result = validator.validateIcaoInput( "XYZ" );
+        String result = validator.validateAirportCodeInput( "XYZ" );
         assertEquals( "XYZ", result );
     }
 
     @Test
-    public void parseIcaoInput_threeCharCode_whenBothMatchesExist_throwsAirportNotFoundException() throws Exception
+    public void parseAirportCodeInput_threeCharCode_whenBothMatchesExist_throwsAirportNotFoundException() throws Exception
     {
         AirportValidator validator = new AirportValidator( TEST_CSV );
 
         assertThrows( AirportNotFoundException.class, () -> validator
-                .validateIcaoInput( "ABC" ) );
+                .validateAirportCodeInput( "ABC" ) );
     }
 
     @Test
-    public void parseIcaoInput_threeCharCode_whenNoMatchExists_throwsAirportNotFoundException() throws Exception
+    public void parseAirportCodeInput_threeCharCode_whenNoMatchExists_throwsAirportNotFoundException() throws Exception
     {
         AirportValidator validator = new AirportValidator( TEST_CSV );
 
         assertThrows( AirportNotFoundException.class, () -> validator
-                .validateIcaoInput( "ZZZ" ) );
+                .validateAirportCodeInput( "ZZZ" ) );
     }
 
     @Test
-    public void parseIcaoInput_twoCharCode_returnsKPrefixedCode() throws Exception
+    public void parseAirportCodeInput_twoCharCode_returnsKPrefixedCode() throws Exception
     {
         AirportValidator validator = new AirportValidator( TEST_CSV );
-        String result = validator.validateIcaoInput( "LA" );
+        String result = validator.validateAirportCodeInput( "LA" );
         assertEquals( "KLA", result );
     }
 
     @Test
-    public void parseIcaoInput_threeCharCode_whenOnlyArptIdExists_returnsArptId() throws Exception
+    public void parseAirportCodeInput_threeCharCode_whenOnlyArptIdExists_returnsArptId() throws Exception
     {
         AirportValidator validator = new AirportValidator( TEST_CSV );
-        String result = validator.validateIcaoInput( "BOS" );
+        String result = validator.validateAirportCodeInput( "BOS" );
         assertEquals( "BOS", result );
     }
 
     @Test
-    public void parseIcaoInput_invalidLength_throwsAirportNotFoundException() throws Exception
+    public void parseAirportCodeInput_invalidLength_throwsAirportNotFoundException() throws Exception
     {
         AirportValidator validator = new AirportValidator( TEST_CSV );
         assertThrows( AirportNotFoundException.class, () -> validator
-                .validateIcaoInput( "A" ) );
+                .validateAirportCodeInput( "A" ) );
     }
 
     @Test
-    public void parseIcaoInput_nullCode_throwsIllegalArgumentException() throws Exception
+    public void parseAirportCodeInput_nullCode_throwsIllegalArgumentException() throws Exception
     {
         AirportValidator validator = new AirportValidator( TEST_CSV );
         assertThrows( IllegalArgumentException.class, () -> validator
-                .validateIcaoInput( null ) );
+                .validateAirportCodeInput( null ) );
     }
 
     @Test
     public void constructor_malformedCoordsInCsv_skipsMalformedRows()
     {
-        AirportValidator validator = assertDoesNotThrow( () -> new AirportValidator(
-                TEST_CSV_MALFORMED ) );
+        AirportValidator validator = assertDoesNotThrow(
+                () -> new AirportValidator( TEST_CSV_MALFORMED ) );
         assertThrows( AirportNotFoundException.class, () -> validator
-                .validateIcaoInput( "BAD" ) );
+                .validateAirportCodeInput( "BAD" ) );
     }
 }

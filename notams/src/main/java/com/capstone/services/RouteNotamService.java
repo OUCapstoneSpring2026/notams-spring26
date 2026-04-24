@@ -5,13 +5,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.io.IOException;
 
-import com.capstone.NMSNotamParser;
-import com.capstone.NmsNotamFetcher;
-import com.capstone.NotamDataFetcher;
-import com.capstone.NotamFetcher;
-import com.capstone.NotamParserInterface;
+import com.capstone.fetching.NmsNotamFetcher;
+import com.capstone.fetching.NotamFetcherInterface;
+import com.capstone.fetching.NotamFetcher;
 import com.capstone.models.FlightPath;
 import com.capstone.models.Notam;
+import com.capstone.parsing.NmsNotamParser;
+import com.capstone.parsing.NotamParserInterface;
 
 /**
  * Service responsible for fetching NOTAMs along a flight route. Ensures the FAA
@@ -19,14 +19,14 @@ import com.capstone.models.Notam;
  */
 public class RouteNotamService
 {
-	private final NotamDataFetcher fetcher;
+	private final NotamFetcherInterface fetcher;
 
 	public RouteNotamService()
 	{
 		this( new NmsNotamFetcher() );
 	}
 
-	public RouteNotamService( final NotamDataFetcher fetcher )
+	public RouteNotamService( final NotamFetcherInterface fetcher )
 	{
 		this.fetcher = fetcher;
 	}
@@ -48,14 +48,14 @@ public class RouteNotamService
 																		InterruptedException
 	{
 		final List<Point2D> points = flightPath.getWaypoints();
-		final NotamParserInterface parser = new NMSNotamParser();
+		final NotamParserInterface parser = new NmsNotamParser();
 		List<Notam> flightPathNotams = new ArrayList<>();
 
 		for( final Point2D point : points ) {
 			final double lat = point.getX();
 			final double lon = point.getY();
 
-			final String response = fetcher.fetchByLocation( lat, lon, 50 );
+			final String response = fetcher.fetchByCoordinates( lat, lon, 50 );
 			flightPathNotams.addAll( parser.parseNotams( response ) );
 		}
 
