@@ -6,19 +6,19 @@ import com.capstone.services.AirportValidator;
 
 public class Airport
 {
-    private final String icao;
+    private final String airportCode;
     private final Point2D coords;
 
-    public Airport( final String icao, final AirportValidator airportValidator )
-                                                                                 throws AirportNotFoundException
+    public Airport( final String airportCode,
+                    final AirportValidator airportValidator ) throws AirportNotFoundException
     {
-        this.icao = icao;
-        this.coords = airportValidator.getCoordsForIcao( icao );
+        this.airportCode = airportCode;
+        this.coords = airportValidator.getCoordsForAirportCode( airportCode );
     }
 
-    public String getIcao()
+    public String getAirportCode()
     {
-        return icao;
+        return airportCode;
     }
 
     public Point2D getCoords()

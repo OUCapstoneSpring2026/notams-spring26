@@ -148,8 +148,8 @@ java -cp target/notams-1.0-SNAPSHOT.jar com.capstone.App
 
 ### Command Line Arguments
 These flags can optionally be used when running the program with either method above. If any are used, then both must be provided with arguments. If no flags are used, the program will prompt the user for input.
-* `--departure <ICAO>`
-* `--arrival <ICAO>`
+* `--departure <airportCode>`
+* `--arrival <airportCode>`
 
 Example usage:
 ```bash

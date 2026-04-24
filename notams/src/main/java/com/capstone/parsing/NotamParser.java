@@ -1,4 +1,4 @@
-package com.capstone;
+package com.capstone.parsing;
 
 import com.capstone.models.Notam;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -18,13 +18,13 @@ public class NotamParser implements NotamParserInterface
 	private final ObjectMapper mapper = new ObjectMapper();
 	private static final Logger logger = LogManager.getLogger();
 
-    /**
-     * Parses the provided JSON string and returns a list of Notam objects.
-     */
-    @Override
-    public List<Notam> parseNotams( String jsonResponse )
-    {
-        final List<Notam> notamList = new ArrayList<>();
+	/**
+	 * Parses the provided JSON string and returns a list of Notam objects.
+	 */
+	@Override
+	public List<Notam> parseNotams( String jsonResponse )
+	{
+		final List<Notam> notamList = new ArrayList<>();
 
 		try {
 			final JsonNode root = mapper.readTree( jsonResponse );
@@ -32,8 +32,8 @@ public class NotamParser implements NotamParserInterface
 
 			for( final JsonNode item : items ) {
 				try {
-					final JsonNode coreData = item.path( "properties" )
-							.path( "coreNOTAMData" );
+					final JsonNode coreData = item.path( "properties" ).path(
+							"coreNOTAMData" );
 					final JsonNode notamNode = coreData.path( "notam" );
 
 					String formattedText = null;
@@ -103,12 +103,12 @@ public class NotamParser implements NotamParserInterface
 					}
 
 					// parse timestamps into Instants
-					final Instant issued = parseInstant(
-							notamNode.path( "issued" ).asText() );
-					final Instant effectiveStart = parseInstant(
-							notamNode.path( "effectiveStart" ).asText() );
-					final Instant effectiveEnd = parseInstant(
-							notamNode.path( "effectiveEnd" ).asText() );
+					final Instant issued = parseInstant( notamNode.path(
+							"issued" ).asText() );
+					final Instant effectiveStart = parseInstant( notamNode.path(
+							"effectiveStart" ).asText() );
+					final Instant effectiveEnd = parseInstant( notamNode.path(
+							"effectiveEnd" ).asText() );
 
 					// Extract the required strings that Notam class is expecting
 					final String notamId = notamNode.path( "id" ).asText();
@@ -118,10 +118,10 @@ public class NotamParser implements NotamParserInterface
 					final String notamText = notamNode.path( "text" ).asText();
 
 					// Skip NOTAMs that are missing the 7 required fields, but log which fields are missing and add to a list.
-					if( notamId.isBlank() || notamNumber.isBlank()
-							|| notamType.isBlank() || notamText.isBlank()
-							|| issued == null || effectiveStart == null
-							|| effectiveEnd == null ) {
+					if( notamId.isBlank() || notamNumber.isBlank() || notamType
+							.isBlank() || notamText.isBlank() || issued == null
+							|| effectiveStart == null || effectiveEnd
+									== null ) {
 
 						final List<String> missingFields = new ArrayList<>();
 						addMissing( missingFields, notamId.isBlank(), "id" );
@@ -153,8 +153,8 @@ public class NotamParser implements NotamParserInterface
 							notamInfoError = notamText;
 							notamInfoLabel = "NOTAM Text: ";
 						}
-						else if( formattedText != null
-								&& !formattedText.isBlank() ) {
+						else if( formattedText != null && !formattedText
+								.isBlank() ) {
 							notamInfoError = formattedText;
 							notamInfoLabel = "NOTAM Formatted Text: ";
 						}
@@ -170,34 +170,35 @@ public class NotamParser implements NotamParserInterface
 					}
 
 					final Notam parsedNotam = Notam.builder().id( notamId )
-							.number( notamNumber ).type( notamType )
-							.issued( issued ).effectiveStart( effectiveStart )
+							.number( notamNumber ).type( notamType ).issued(
+									issued ).effectiveStart( effectiveStart )
 							.effectiveEnd( effectiveEnd ).text( notamText )
 							.location( notamNode.path( "location" ).asText() )
 							.classification( notamNode.path( "classification" )
-									.asText() ).icaoLocation(
-									notamNode.path( "icaoLocation" ).asText() )
-							.coordinates(
-									notamNode.path( "coordinates" ).asText() )
-							.radius( notamNode.path( "radius" ).asText() )
-							.series( notamNode.path( "series" ).asText() )
-							.affectedFIR( affectedFIR )
-							.formattedText( formattedText )
-							.selectionCode( selectionCode ).traffic( traffic )
+									.asText() ).icaoLocation( notamNode.path(
+											"icaoLocation" ).asText() )
+							.coordinates( notamNode.path( "coordinates" )
+									.asText() ).radius( notamNode.path(
+											"radius" ).asText() ).series(
+													notamNode.path( "series" )
+															.asText() )
+							.affectedFIR( affectedFIR ).formattedText(
+									formattedText ).selectionCode(
+											selectionCode ).traffic( traffic )
 							.purpose( purpose ).scope( scope ).build();
 
 					notamList.add( parsedNotam );
 				}
-				catch( final IllegalArgumentException |
-							 NullPointerException e ) {
+				catch( final    IllegalArgumentException |
+						NullPointerException e ) {
 					// Catch any bad NOTAM that got past our checks. Skip the broken/missing-info NOTAM, log it and move on
 					logger.error( "Skipped malformed NOTAM: ", e );
 				}
 			}
 		}
 		catch( final JsonProcessingException e ) {
-			throw new RuntimeException(
-					"Failed to parse NOTAM JSON: " + e.getMessage(), e );
+			throw new RuntimeException( "Failed to parse NOTAM JSON: " + e
+					.getMessage(), e );
 		}
 
 		return notamList;
@@ -231,15 +232,15 @@ public class NotamParser implements NotamParserInterface
 	 * Helper to collect the names of any required fields that are missing.
 	 *
 	 * @param missingFields
-	 * 		list of missing required fields
+	 *     list of missing required fields
 	 * @param isMissing
-	 * 		whether the field is missing
+	 *     whether the field is missing
 	 * @param fieldName
-	 * 		name of the field to add
+	 *     name of the field to add
 	 */
-	private void addMissing( List<String> missingFields,
-							 boolean isMissing,
-							 String fieldName )
+	private void addMissing(    List<String> missingFields,
+								boolean isMissing,
+								String fieldName )
 	{
 		if( isMissing ) {
 			missingFields.add( fieldName );
