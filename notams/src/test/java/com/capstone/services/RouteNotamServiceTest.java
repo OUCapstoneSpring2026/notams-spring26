@@ -4,7 +4,8 @@ import java.awt.geom.Point2D;
 import java.io.IOException;
 import java.util.List;
 
-import com.capstone.NotamFetcher;
+import com.capstone.NotamDataFetcher;
+import com.capstone.models.Notam;
 import com.capstone.models.FlightPath;
 
 import org.junit.jupiter.api.Test;
@@ -12,64 +13,79 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class RouteNotamServiceTest
 {
 	@Test
-	public void fetchNotamsAlongRoute_multipleWaypoints_combinesIntoSingleJsonString()
-			throws IOException, InterruptedException
+	public void fetchNotamsAlongRoute_multipleWaypoints_returnsCombinedParsedNotams()   throws IOException,
+																						InterruptedException
 	{
-		NotamFetcher fetcher = mock( NotamFetcher.class );
+		NotamDataFetcher fetcher = mock( NotamDataFetcher.class );
 		FlightPath flightPath = mock( FlightPath.class );
 
-		List<Point2D> waypoints = List.of( new Point2D.Double( 35.0, -97.0 ),
-				new Point2D.Double( 36.0, -98.0 ) );
+		List<Point2D> waypoints = List.of( new Point2D.Double( 45.0, -90.0 ),
+				new Point2D.Double( 46.0, -91.0 ) );
 
 		when( flightPath.getWaypoints() ).thenReturn( waypoints );
-		when( fetcher.fetchByLocation( 35.0, -97.0, 50 ) ).thenReturn(
-				"{\"data\":{\"geojson\":[{\"id\":1}]}}" );
-		when( fetcher.fetchByLocation( 36.0, -98.0, 50 ) ).thenReturn(
-				"{\"data\":{\"geojson\":[{\"id\":2}]}}" );
+		when( fetcher.fetchByLocation( 45.0, -90.0, 50 ) ).thenReturn(
+				buildResponse( "id-1", "A0001/26" ) );
+		when( fetcher.fetchByLocation( 46.0, -91.0, 50 ) ).thenReturn(
+				buildResponse( "id-2", "A0002/26" ) );
 
 		RouteNotamService service = new RouteNotamService( fetcher );
-		String result = service.fetchNotamsAlongRoute( flightPath );
+		List<Notam> result = service.fetchNotamsAlongRoute( flightPath );
 
-		assertEquals( "{\"data\":{\"geojson\":[{\"id\":1},{\"id\":2}]}}",
-				result );
-		verify( fetcher ).fetchByLocation( 35.0, -97.0, 50 );
-		verify( fetcher ).fetchByLocation( 36.0, -98.0, 50 );
+		assertEquals( 2, result.size() );
+		assertEquals( "id-1", result.get( 0 ).getId() );
+		assertEquals( "id-2", result.get( 1 ).getId() );
+		verify( fetcher ).fetchByLocation( 45.0, -90.0, 50 );
+		verify( fetcher ).fetchByLocation( 46.0, -91.0, 50 );
 	}
 
 	@Test
-	public void fetchNotamsAlongRoute_noWaypoints_returnsEmptyGeojsonArray()
-			throws IOException, InterruptedException
+	public void fetchNotamsAlongRoute_noWaypoints_returnsEmptyNotamList()   throws IOException,
+																			InterruptedException
 	{
-		NotamFetcher fetcher = mock( NotamFetcher.class );
+		NotamDataFetcher fetcher = mock( NotamDataFetcher.class );
 		FlightPath flightPath = mock( FlightPath.class );
 		when( flightPath.getWaypoints() ).thenReturn( List.of() );
 
 		RouteNotamService service = new RouteNotamService( fetcher );
-		String result = service.fetchNotamsAlongRoute( flightPath );
+		List<Notam> result = service.fetchNotamsAlongRoute( flightPath );
 
-		assertEquals( "{\"data\":{\"geojson\":[]}}", result );
+		assertEquals( 0, result.size() );
+		verifyNoInteractions( fetcher );
 	}
 
 	@Test
-	public void fetchNotamsAlongRoute_fetcherThrowsIOException_propagatesException()
-			throws IOException, InterruptedException
+	public void fetchNotamsAlongRoute_fetcherThrowsIOException_propagatesException()    throws IOException,
+																						InterruptedException
 	{
-		NotamFetcher fetcher = mock( NotamFetcher.class );
+		NotamDataFetcher fetcher = mock( NotamDataFetcher.class );
 		FlightPath flightPath = mock( FlightPath.class );
-		when( flightPath.getWaypoints() ).thenReturn(
-				List.of( new Point2D.Double( 35.0, -97.0 ) ) );
-		when( fetcher.fetchByLocation( 35.0, -97.0, 50 ) ).thenThrow(
+		when( flightPath.getWaypoints() ).thenReturn( List.of(
+				new Point2D.Double( 45.0, -90.0 ) ) );
+		when( fetcher.fetchByLocation( 45.0, -90.0, 50 ) ).thenThrow(
 				new IOException( "network failure" ) );
 
 		RouteNotamService service = new RouteNotamService( fetcher );
 
-		assertThrows( IOException.class,
-				() -> service.fetchNotamsAlongRoute( flightPath ) );
+		assertThrows( IOException.class, () -> service.fetchNotamsAlongRoute(
+				flightPath ) );
+	}
+
+	private static String buildResponse( String id, String number )
+	{
+		return "{" + "\"data\":{" + "\"geojson\":[" + "{" + "\"properties\":{"
+				+ "\"coreNOTAMData\":{" + "\"notam\":{" + "\"id\":\"" + id
+				+ "\"," + "\"number\":\"" + number + "\"," + "\"type\":\"N\","
+				+ "\"issued\":\"2026-02-01T00:00:00Z\","
+				+ "\"effectiveStart\":\"2026-02-01T01:00:00Z\","
+				+ "\"effectiveEnd\":\"2026-02-02T01:00:00Z\","
+				+ "\"text\":\"RWY CLSD\"" + "}," + "\"notamTranslation\":[]"
+				+ "}" + "}" + "}" + "]" + "}" + "}";
 	}
 }
